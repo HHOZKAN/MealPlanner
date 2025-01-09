@@ -33,13 +33,13 @@ git status
 read -p "$(echo -e ${YELLOW}"Voulez-vous continuer ? (y/n) "${NC})" choice
 case "$choice" in 
   y|Y ) ;;
-  n|N ) exit 0;;
-  * ) error "Réponse invalide"; exit 1;;
+  n|N ) exit 0 ;;
+  * ) error "Réponse invalide"; exit 1 ;;
 esac
 
-# Ajouter tous les fichiers
-log "Ajout des fichiers modifiés..."
-git add .
+# Ajouter tous les fichiers (y compris non suivis)
+log "Ajout des fichiers modifiés et non suivis..."
+git add -A
 
 # Demander le message de commit
 read -p "$(echo -e ${GREEN}"Message de commit : "${NC})" commit_message
@@ -53,6 +53,10 @@ fi
 # Faire le commit
 log "Création du commit..."
 git commit -m "$commit_message"
+
+# Vérifier les remotes
+log "Liste des remotes configurées :"
+git remote -v
 
 # Push vers GitHub
 log "Push vers GitHub..."
