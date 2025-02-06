@@ -13,16 +13,16 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('description')->nullable();
-            $table->dateTime('date');
-            $table->string('location')->nullable();
-            $table->string('type');
-            $table->foreignId('organizer_id')->constrained('users');
-            $table->enum('status', ['draft', 'planning', 'confirmed', 'cancelled', 'completed'])
-                ->default('draft');
-            $table->timestamps();
-            $table->softDeletes();
+        $table->string('title');
+        $table->text('description')->nullable();
+        $table->dateTime('date');
+        $table->string('location')->nullable();
+        $table->string('type');
+        $table->foreignId('organizer_id')->constrained('users');
+        $table->enum('status', ['draft', 'planning', 'confirmed', 'cancelled', 'completed'])
+            ->default('draft');
+        $table->timestamps();
+        $table->softDeletes();
         });
     }
 
