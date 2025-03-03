@@ -127,33 +127,37 @@ class AuthController extends Controller
                 'email.email' => 'L\'email n\'est pas valide',
                 'password.required' => 'Le mot de passe est obligatoire',
             ]);
-
+    
             if ($validator->fails()) {
                 return $this->errorResponse($validator->errors()->first(), 422);
             }
-
+    
             if (!Auth::attempt($request->only('email', 'password'))) {
                 return $this->errorResponse('Identifiants incorrects', 401);
             }
-
-            $user = User::where('email', $request->email)->firstOrFail();
+    
+            $user = User::where('email', $request->email)->first();
             
-            // Vérifier si l'utilisateur est actif
-            if (!$user->is_active) {
-                return $this->errorResponse('Votre compte est désactivé', 403);
-            }
-
+            // Supprimer cette vérification ou la modifier selon vos besoins
+            // if (!$user->is_active) {
+            //     return $this->errorResponse('Votre compte est désactivé', 403);
+            // }
+    
             // Supprimer les anciens tokens
             $user->tokens()->delete();
-
-            $token = $user->createToken('auth_token', ['*'], now()->addDays(7))->plainTextToken;
-
+    
+            $token = $user->createToken('auth_token')->plainTextToken;
+    
             return $this->successResponse([
                 'user' => $user,
                 'token' => $token
             ], 'Connexion réussie');
-
+    
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la connexion', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return $this->errorResponse('Une erreur est survenue lors de la connexion', 500);
         }
     }

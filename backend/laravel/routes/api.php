@@ -22,11 +22,11 @@ Route::prefix('auth')->group(function () {
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
     // Routes protégées
-    Route::middleware(['auth:sanctum', 'check.token'])->group(function () {
-        Route::post('logout', [AuthController::class, 'logout']);
-        Route::get('me', [AuthController::class, 'me']);
-        Route::put('profile', [AuthController::class, 'updateProfile']);
-        Route::post('change-password', [AuthController::class, 'changePassword']);
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::put('/profile', [AuthController::class, 'updateProfile']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
     });
 
     // Events

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL; 
 
 
 class User extends Authenticatable
@@ -20,7 +21,8 @@ class User extends Authenticatable
         'password',
         'phone_number',
         'avatar',
-        'preferences'
+        'preferences',
+        'is_active'
     ];
 
     protected $hidden = [
@@ -30,15 +32,15 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'preferences' => 'array'
+        'preferences' => 'array',
+         'is_active' => 'boolean'
     ];
 
     protected $appends = ['avatar_url'];
-
     public function getAvatarUrlAttribute()
     {
         if ($this->avatar) {
-            return asset('storage/' . $this->avatar);
+            return URL::to('storage/' . $this->avatar);
         }
         return null;
     }

@@ -1,15 +1,16 @@
-<?php 
+<?php
 
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckTokenExpiration
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && $request->user()->tokenCan('*')) {
+        if ($request->user() && $request->user()->currentAccessToken()) {
             $token = $request->user()->currentAccessToken();
             
             if ($token->created_at->addDays(7) < now()) {
@@ -24,5 +25,3 @@ class CheckTokenExpiration
         return $next($request);
     }
 }
-
-?>
