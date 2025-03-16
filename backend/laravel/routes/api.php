@@ -23,23 +23,31 @@ Route::prefix('auth')->group(function () {
 
     // Routes protégées
     Route::middleware(['auth:sanctum'])->group(function () {
+
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::put('/profile', [AuthController::class, 'updateProfile']);
         Route::post('/change-password', [AuthController::class, 'changePassword']);
-    });
+        
+        // Route pour les événements supprimés
+        Route::get('events/trashed', [EventController::class, 'trashed'])->name('events.trashed');
+        Route::post('events/{id}/restore', [EventController::class, 'restore'])->name('events.restore');
+        Route::delete('events/{id}/force', [EventController::class, 'forceDelete'])->name('events.force-delete');
 
-    // Events
-    Route::apiResource('events', EventController::class);
+        // Route de ressource standard
+        Route::apiResource('events', EventController::class);
+
+        // Routes pour les participants
+        Route::get('events/{event}/participants', [ParticipantController::class, 'index']);
+        Route::post('events/{event}/participants/invite', [ParticipantController::class, 'invite']);
+        Route::put('participants/{participant}', [ParticipantController::class, 'update']);
+        Route::delete('participants/{participant}', [ParticipantController::class, 'destroy']);
+    });
 
     // Ingredients
     Route::apiResource('events.ingredients', IngredientController::class)
         ->shallow();
 
-    // Participants
-    Route::apiResource('events.participants', ParticipantController::class)
-        ->shallow();
-    Route::post('events/{event}/participants/invite', [ParticipantController::class, 'invite']);
 
     // Payments
     Route::apiResource('events.payments', PaymentController::class)

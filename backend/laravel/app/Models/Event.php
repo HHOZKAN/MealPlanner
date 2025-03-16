@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Event extends Model
@@ -54,5 +57,10 @@ class Event extends Model
         return $this->ingredients()
             ->whereNotNull('actual_price')
             ->sum('actual_price');
+    }
+
+    public function pendingInvitations()
+    {
+        return $this->hasMany(PendingInvitation::class);
     }
 }

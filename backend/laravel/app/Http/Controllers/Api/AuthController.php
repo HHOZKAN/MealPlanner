@@ -165,14 +165,30 @@ class AuthController extends Controller
      * Logout user
      */
     public function logout(Request $request)
-    {
-        try {
-            $request->user()->currentAccessToken()->delete();
-            return $this->successResponse(null, 'Déconnexion réussie');
-        } catch (\Exception $e) {
-            return $this->errorResponse('Une erreur est survenue lors de la déconnexion', 500);
+{
+    try {
+        if ($request->user()) {
+            $request->user()->tokens()->delete();
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Déconnexion réussie'
+            ]);
         }
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Non authentifié'
+        ], 401);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Une erreur est survenue lors de la déconnexion',
+            'debug' => config('app.debug') ? $e->getMessage() : null
+        ], 500);
     }
+}
 
     /**
      * Get authenticated user
