@@ -8,7 +8,8 @@ use App\Models\User;
 use App\Models\Participant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str; // Ajout de l'import pour Str
+use Illuminate\Support\Facades\Log;  
+use Illuminate\Support\Str;
 use App\Traits\ApiResponse;
 
 class ParticipantController extends Controller
@@ -57,8 +58,11 @@ class ParticipantController extends Controller
                 // Créer la participation
                 $participant = $event->participants()->create([
                     'user_id' => $user->id,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'event_id' => $event->id
                 ]);
+
+                Log::info('Participant créé', ['participant' => $participant->toArray()]);
 
                 return $this->successResponse([
                     'participant' => $participant->load('user'),
@@ -72,13 +76,23 @@ class ParticipantController extends Controller
                     'token' => Str::random(32)
                 ]);
 
+                Log::info('Invitation en attente créée', ['invitation' => $pendingInvitation->toArray()]);
+
                 return $this->successResponse([
                     'invitation' => $pendingInvitation,
                     'type' => 'new_user'
                 ], 'Invitation envoyée par email');
             }
         } catch (\Exception $e) {
-            return $this->errorResponse('Erreur lors de l\'envoi de l\'invitation: ' . $e->getMessage(), 500);
+            Log::error('Erreur lors de l\'invitation:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return $this->errorResponse(
+                'Erreur lors de l\'envoi de l\'invitation: ' . $e->getMessage(), 
+                500
+            );
         }
     }
 

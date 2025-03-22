@@ -9,17 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('participants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained();
-            $table->enum('status', ['invited', 'confirmed', 'declined', 'maybe'])
-                ->default('invited');
-            $table->timestamp('responded_at')->nullable();
+            $table->enum('status', ['pending', 'accepted', 'declined', 'maybe'])->default('pending');
             $table->text('note')->nullable();
+            $table->timestamp('responded_at')->nullable();
             $table->timestamps();
+            
+            // Un utilisateur ne peut être qu'une fois participant d'un événement
             $table->unique(['event_id', 'user_id']);
         });
     }
