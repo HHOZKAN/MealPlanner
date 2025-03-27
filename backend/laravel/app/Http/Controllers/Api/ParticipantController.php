@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\User;
 use App\Models\Participant;
+use App\Mail\EventInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;  
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Traits\ApiResponse;
 
@@ -17,12 +19,28 @@ class ParticipantController extends Controller
     use ApiResponse;
 
     /**
-     * Vérifier si l'utilisateur peut accéder à l'événement
+     * Liste des participants d'un événement
      */
-    private function canAccessEvent(Event $event)
+    public function index(Event $event)
     {
-        return $event->organizer_id === Auth::id() || 
-               $event->participants()->where('user_id', Auth::id())->exists();
+        try {
+            if (!$this->canAccessEvent($event)) {
+                return $this->errorResponse('Non autorisé', 403);
+            }
+
+            $data = [
+                'participants' => $event->participants()->with('user')->get(),
+                'pending_invitations' => $event->pendingInvitations
+            ];
+
+            return $this->successResponse($data, 'Participants récupérés avec succès');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des participants', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $this->errorResponse('Erreur lors de la récupération des participants', 500);
+        }
     }
 
     /**
@@ -36,7 +54,7 @@ class ParticipantController extends Controller
                 return $this->errorResponse('Seul l\'organisateur peut inviter des participants', 403);
             }
 
-            // Valider l'email
+            // Valider l'email et le message
             $validated = $request->validate([
                 'email' => 'required|email',
                 'message' => 'nullable|string'
@@ -58,25 +76,48 @@ class ParticipantController extends Controller
                 // Créer la participation
                 $participant = $event->participants()->create([
                     'user_id' => $user->id,
-                    'status' => 'pending',
-                    'event_id' => $event->id
+                    'status' => 'pending'
                 ]);
 
-                Log::info('Participant créé', ['participant' => $participant->toArray()]);
+                // Envoyer l'email d'invitation
+                Mail::to($user->email)
+                    ->queue(new EventInvitation(
+                        $event,
+                        $validated['message'],
+                        false
+                    ));
+
+                Log::info('Invitation envoyée à un utilisateur existant', [
+                    'user_id' => $user->id,
+                    'event_id' => $event->id
+                ]);
 
                 return $this->successResponse([
                     'participant' => $participant->load('user'),
                     'type' => 'existing_user'
                 ], 'Invitation envoyée avec succès');
             } else {
-                // Stocker l'invitation en attente
+                // Créer une invitation en attente pour un nouvel utilisateur
+                $token = Str::random(32);
                 $pendingInvitation = $event->pendingInvitations()->create([
                     'email' => $validated['email'],
-                    'message' => $validated['message'] ?? null,
-                    'token' => Str::random(32)
+                    'message' => $validated['message'],
+                    'token' => $token
                 ]);
 
-                Log::info('Invitation en attente créée', ['invitation' => $pendingInvitation->toArray()]);
+                // Envoyer l'email d'invitation
+                Mail::to($validated['email'])
+                    ->queue(new EventInvitation(
+                        $event,
+                        $validated['message'],
+                        true,
+                        $token
+                    ));
+
+                Log::info('Invitation envoyée à un nouvel utilisateur', [
+                    'email' => $validated['email'],
+                    'event_id' => $event->id
+                ]);
 
                 return $this->successResponse([
                     'invitation' => $pendingInvitation,
@@ -93,27 +134,6 @@ class ParticipantController extends Controller
                 'Erreur lors de l\'envoi de l\'invitation: ' . $e->getMessage(), 
                 500
             );
-        }
-    }
-
-    /**
-     * Liste des participants
-     */
-    public function index(Event $event)
-    {
-        try {
-            if (!$this->canAccessEvent($event)) {
-                return $this->errorResponse('Non autorisé', 403);
-            }
-
-            $data = [
-                'participants' => $event->participants()->with('user')->get(),
-                'pending_invitations' => $event->pendingInvitations
-            ];
-
-            return $this->successResponse($data, 'Participants récupérés avec succès');
-        } catch (\Exception $e) {
-            return $this->errorResponse('Erreur lors de la récupération des participants', 500);
         }
     }
 
@@ -138,11 +158,20 @@ class ParticipantController extends Controller
                 'responded_at' => now()
             ]);
 
+            Log::info('Réponse à l\'invitation mise à jour', [
+                'participant_id' => $participant->id,
+                'status' => $validated['status']
+            ]);
+
             return $this->successResponse(
                 $participant->load('user'), 
                 'Réponse enregistrée avec succès'
             );
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la réponse à l\'invitation', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return $this->errorResponse('Erreur lors de la réponse à l\'invitation', 500);
         }
     }
@@ -158,10 +187,29 @@ class ParticipantController extends Controller
             }
 
             $participant->delete();
+
+            Log::info('Participant supprimé', [
+                'participant_id' => $participant->id,
+                'event_id' => $participant->event_id
+            ]);
+
             return $this->successResponse(null, 'Participant retiré avec succès');
         } catch (\Exception $e) {
+            Log::error('Erreur lors de la suppression du participant', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return $this->errorResponse('Erreur lors du retrait du participant', 500);
         }
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut accéder à l'événement
+     */
+    private function canAccessEvent(Event $event)
+    {
+        return $event->organizer_id === Auth::id() || 
+               $event->participants()->where('user_id', Auth::id())->exists();
     }
 
     /**

@@ -1,10 +1,30 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ParticipantController;
+use App\Mail\TestMail;
 
+// Route de test email (sans authentification)
+Route::get('/test-mail', function () {
+    try {
+        Mail::to('test@example.com')->send(new TestMail());
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Email envoyé avec succès'
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Erreur d\'envoi d\'email: ' . $e->getMessage());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Erreur lors de l\'envoi de l\'email',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
 // Routes publiques
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -35,4 +55,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('participants/{participant}', [ParticipantController::class, 'update']);
         Route::delete('participants/{participant}', [ParticipantController::class, 'destroy']);
     });
+
+    
 });

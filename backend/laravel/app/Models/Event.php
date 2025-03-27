@@ -63,4 +63,8 @@ class Event extends Model
     {
         return $this->hasMany(PendingInvitation::class);
     }
+
+
 }
+
+

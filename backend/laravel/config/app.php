@@ -197,4 +197,9 @@ return [
     // ... autres aliases si nécessaire
 ],
 
+'store_urls' => [
+    'ios' => env('APP_STORE_URL', 'https://apps.apple.com/app/meal-planner'),
+    'android' => env('PLAY_STORE_URL', 'https://play.google.com/store/apps/meal-planner'),
+],
+
 ];
