@@ -5,11 +5,12 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\ParticipantController;
 use App\Mail\TestMail;
 
-// Route de test email (sans authentification)
+// Route de test email
 Route::get('/test-mail', function () {
     try {
         Mail::to('test@example.com')->send(new TestMail());
@@ -26,6 +27,7 @@ Route::get('/test-mail', function () {
         ], 500);
     }
 });
+
 // Routes publiques
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -36,6 +38,7 @@ Route::prefix('auth')->group(function () {
 
 // Routes protégées
 Route::middleware(['auth:sanctum'])->group(function () {
+    // Routes Auth
     Route::prefix('auth')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
@@ -45,6 +48,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Routes des événements
     Route::prefix('events')->group(function () {
+        // Routes de base des événements
         Route::get('trashed', [EventController::class, 'trashed']);
         Route::post('{id}/restore', [EventController::class, 'restore']);
         Route::delete('{id}/force', [EventController::class, 'forceDelete']);
@@ -65,5 +69,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{event}/ingredients/{ingredient}/assign', [IngredientController::class, 'assign']);
         Route::get('{event}/ingredients/{ingredient}/assignments', [IngredientController::class, 'assignments']);
         Route::put('{event}/ingredients/{ingredient}/assignments/{assignment}', [IngredientController::class, 'updateAssignment']);
+
+        // Dépenses
+        Route::post('{event}/expenses/calculate', [ExpenseController::class, 'calculateExpenses']);
+        Route::get('{event}/expenses/summary', [ExpenseController::class, 'summary']);
+        Route::post('{event}/expenses/shares/{share}/paid', [ExpenseController::class, 'markAsPaid']);
+
+        // Remboursement
+        Route::get('events/{event}/expenses/reimbursements', [ExpenseController::class, 'getReimbursements']);
+
     });
 });

@@ -289,21 +289,23 @@ class IngredientController extends Controller
     public function updateAssignment(Request $request, Event $event, Ingredient $ingredient, IngredientAssignment $assignment)
     {
         try {
+            // Vérifie si l'utilisateur est participant à l'événement
             if (!$this->canAccessEvent($event) || $ingredient->event_id !== $event->id) {
                 return $this->errorResponse('Non autorisé', 403);
             }
-
-            if ($assignment->user_id !== Auth::id()) {
-                return $this->errorResponse('Vous ne pouvez modifier que vos propres assignations', 403);
-            }
-
+    
+            // Supprimons cette vérification restrictive
+            // if ($assignment->user_id !== Auth::id()) {
+            //     return $this->errorResponse('Vous ne pouvez modifier que vos propres assignations', 403);
+            // }
+    
             $validated = $request->validate([
                 'status' => 'required|in:pending,purchased',
                 'price_paid' => 'required_if:status,purchased|nullable|numeric|min:0',
                 'store_name' => 'nullable|string|max:255',
                 'receipt_image' => 'nullable|string' // Base64 encoded image
             ]);
-
+    
             // Gérer l'upload de l'image si présente
             if (isset($validated['receipt_image'])) {
                 $imageName = 'receipt_' . time() . '.jpg';
@@ -313,9 +315,9 @@ class IngredientController extends Controller
                 );
                 $validated['receipt_image'] = 'receipts/' . $imageName;
             }
-
+    
             $assignment->update($validated);
-
+    
             // Si marqué comme acheté, mettre à jour le prix réel de l'ingrédient
             if ($validated['status'] === 'purchased' && isset($validated['price_paid'])) {
                 $ingredient->update([
@@ -323,7 +325,13 @@ class IngredientController extends Controller
                     'status' => 'purchased'
                 ]);
             }
-
+    
+            Log::info('Assignation mise à jour', [
+                'ingredient_id' => $ingredient->id,
+                'assignment_id' => $assignment->id,
+                'updated_by' => Auth::id()
+            ]);
+    
             return $this->successResponse(
                 $assignment->load('user'),
                 'Assignation mise à jour avec succès'
@@ -341,8 +349,8 @@ class IngredientController extends Controller
      */
     private function canAccessEvent(Event $event)
     {
-        return $event->organizer_id === Auth::id() ||
-            $event->participants()->where('user_id', Auth::id())->exists();
+        return $event->organizer_id === Auth::id() || 
+               $event->participants()->where('user_id', Auth::id())->exists();
     }
 
     /**
