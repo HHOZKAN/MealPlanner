@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\ParticipantController;
+use App\Http\Controllers\Api\ReimbursementController;
 use App\Mail\TestMail;
 
 // Route de test email
@@ -76,7 +77,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{event}/expenses/shares/{share}/paid', [ExpenseController::class, 'markAsPaid']);
 
         // Remboursement
-        Route::get('events/{event}/expenses/reimbursements', [ExpenseController::class, 'getReimbursements']);
+        Route::post('{event}/reimbursements/calculate', [ReimbursementController::class, 'calculateReimbursements']);
+        Route::post('{event}/reimbursements/{reimbursement}/paid', [ReimbursementController::class, 'markAsPaid']);
 
     });
 });
