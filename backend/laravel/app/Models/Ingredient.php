@@ -17,15 +17,28 @@ class Ingredient extends Model
         'unit',
         'estimated_price',
         'actual_price',
-        'is_required',
         'added_by',
-        'status'
+        'status',
+        'notes'
     ];
 
     protected $casts = [
-        'is_required' => 'boolean',
+        'quantity' => 'decimal:2',
         'estimated_price' => 'decimal:2',
-        'actual_price' => 'decimal:2'
+        'actual_price' => 'decimal:2',
+    ];
+
+    const STATUS_NEEDED = 'needed';
+    const STATUS_ASSIGNED = 'assigned';
+    const STATUS_PURCHASED = 'purchased';
+
+    const UNITS = [
+        'g' => 'Grammes',
+        'kg' => 'Kilogrammes',
+        'ml' => 'Millilitres',
+        'l' => 'Litres',
+        'piece' => 'Pièce(s)',
+        'pack' => 'Paquet(s)'
     ];
 
     public function event()
@@ -41,10 +54,5 @@ class Ingredient extends Model
     public function assignments()
     {
         return $this->hasMany(IngredientAssignment::class);
-    }
-
-    public function sharedIngredients()
-    {
-        return $this->hasMany(SharedIngredient::class);
     }
 }

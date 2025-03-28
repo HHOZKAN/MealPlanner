@@ -14,6 +14,7 @@ class IngredientAssignment extends Model
         'user_id',
         'quantity',
         'price_paid',
+        'store_name',
         'receipt_image',
         'status'
     ];
@@ -21,6 +22,14 @@ class IngredientAssignment extends Model
     protected $casts = [
         'quantity' => 'decimal:2',
         'price_paid' => 'decimal:2'
+    ];
+
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PURCHASED = 'purchased';
+
+    public static $validStatuses = [
+        self::STATUS_PENDING,
+        self::STATUS_PURCHASED
     ];
 
     public function ingredient()

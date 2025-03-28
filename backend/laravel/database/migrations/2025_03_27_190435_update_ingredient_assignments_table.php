@@ -4,13 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class UpdateIngredientAssignmentsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up()
     {
+        Schema::dropIfExists('ingredient_assignments');
+        
         Schema::create('ingredient_assignments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ingredient_id')->constrained()->onDelete('cascade');
@@ -19,16 +18,13 @@ return new class extends Migration
             $table->decimal('price_paid', 8, 2)->nullable();
             $table->string('store_name')->nullable();
             $table->string('receipt_image')->nullable();
-            $table->string('status')->default('pending'); // pending, purchased
+            $table->string('status')->default('pending'); // Pas de contrainte check ici
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('ingredient_assignments');
     }
-};
+}

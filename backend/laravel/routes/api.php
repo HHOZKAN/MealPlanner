@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\ParticipantController;
 use App\Mail\TestMail;
 
@@ -48,13 +49,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{id}/restore', [EventController::class, 'restore']);
         Route::delete('{id}/force', [EventController::class, 'forceDelete']);
         Route::apiResource('/', EventController::class);
-        
+
         // Participants
         Route::get('{event}/participants', [ParticipantController::class, 'index']);
         Route::post('{event}/participants/invite', [ParticipantController::class, 'invite']);
         Route::put('participants/{participant}', [ParticipantController::class, 'update']);
         Route::delete('participants/{participant}', [ParticipantController::class, 'destroy']);
-    });
 
-    
+        // Ingrédients
+        Route::get('{event}/ingredients', [IngredientController::class, 'index']);
+        Route::post('{event}/ingredients', [IngredientController::class, 'store']);
+        Route::get('{event}/ingredients/{ingredient}', [IngredientController::class, 'show']);
+        Route::put('{event}/ingredients/{ingredient}', [IngredientController::class, 'update']);
+        Route::delete('{event}/ingredients/{ingredient}', [IngredientController::class, 'destroy']);
+        Route::post('{event}/ingredients/{ingredient}/assign', [IngredientController::class, 'assign']);
+        Route::get('{event}/ingredients/{ingredient}/assignments', [IngredientController::class, 'assignments']);
+        Route::put('{event}/ingredients/{ingredient}/assignments/{assignment}', [IngredientController::class, 'updateAssignment']);
+    });
 });

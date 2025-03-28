@@ -9,20 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('ingredients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->decimal('quantity', 8, 2);
-            $table->string('unit');
-            $table->decimal('estimated_price', 10, 2)->nullable();
-            $table->decimal('actual_price', 10, 2)->nullable();
-            $table->boolean('is_required')->default(true);
+            $table->string('unit'); // g, kg, l, ml, pièce, etc.
+            $table->decimal('estimated_price', 8, 2)->nullable();
+            $table->decimal('actual_price', 8, 2)->nullable();
             $table->foreignId('added_by')->constrained('users');
-            $table->enum('status', ['needed', 'assigned', 'purchased'])
-                ->default('needed');
+            $table->string('status')->default('needed'); // needed, assigned, purchased
+            $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
