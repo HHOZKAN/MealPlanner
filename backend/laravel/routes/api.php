@@ -4,8 +4,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\ParticipantController;
 use App\Http\Controllers\Api\PriceController;
@@ -87,5 +89,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [PriceController::class, 'store']);
         Route::get('/history', [PriceController::class, 'history']);
         Route::get('/store-stats', [PriceController::class, 'storeStats']);
+    });
+
+    Route::prefix('dashboard')->group(function () {
+        Route::get('overview', [DashboardController::class, 'overview']);
+        Route::get('event-history', [DashboardController::class, 'eventHistory']);
+        Route::get('personal-stats', [DashboardController::class, 'personalStats']);
+    });
+
+    Route::prefix('groups')->group(function () {
+        Route::get('/', [GroupController::class, 'index']);
+        Route::post('/', [GroupController::class, 'store']);
+        Route::get('/{group}', [GroupController::class, 'show']);
+        Route::put('/{group}', [GroupController::class, 'update']);
+        Route::delete('/{group}', [GroupController::class, 'destroy']);
+        Route::post('/{group}/members', [GroupController::class, 'addMembers']);
+        Route::delete('/{group}/members/{user}', [GroupController::class, 'removeMember']);
+        Route::put('/{group}/preferences', [GroupController::class, 'updatePreferences']);
     });
 });
