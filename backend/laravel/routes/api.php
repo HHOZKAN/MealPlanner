@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\ParticipantController;
+use App\Http\Controllers\Api\PriceController;
 use App\Http\Controllers\Api\ReimbursementController;
 use App\Mail\TestMail;
 
@@ -79,6 +80,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Remboursement
         Route::post('{event}/reimbursements/calculate', [ReimbursementController::class, 'calculateReimbursements']);
         Route::post('{event}/reimbursements/{reimbursement}/paid', [ReimbursementController::class, 'markAsPaid']);
+    });
 
+
+    Route::prefix('prices')->group(function () {
+        Route::post('/', [PriceController::class, 'store']);
+        Route::get('/history', [PriceController::class, 'history']);
+        Route::get('/store-stats', [PriceController::class, 'storeStats']);
     });
 });
