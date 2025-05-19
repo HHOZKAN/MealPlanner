@@ -1,8 +1,18 @@
+name: meal_planner
+description: Application de planification de repas
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' 
+  flutter: ">=3.10.0"
+
 dependencies:
   flutter:
     sdk: flutter
   # Gestion d'état
+  flutter_localizations:
+    sdk: flutter
   flutter_riverpod: ^2.3.6
+
   # Navigation
   go_router: ^10.0.0
   # HTTP client
@@ -11,20 +21,15 @@ dependencies:
   shared_preferences: ^2.2.0
   # Gestion des formulaires
   flutter_form_builder: ^9.0.0
-  form_builder_validators: ^9.0.0
+  form_builder_validators: ^11.0.0  # Mise à jour vers la version 11.0.0
   # UI
   flutter_svg: ^2.0.7
   cached_network_image: ^3.2.3
   # Utilitaires
-  intl: ^0.18.1
+  intl: ^0.19.0  # Gardez votre version actuelle
   logger: ^1.4.0
+  image_picker: ^1.0.0
+
   # Animations
   lottie: ^2.5.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^2.0.2
-  build_runner: ^2.4.6
-  freezed: ^2.4.1
-  json_serializable: ^6.7.1
+  

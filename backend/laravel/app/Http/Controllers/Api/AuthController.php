@@ -9,9 +9,9 @@ use App\Traits\ApiResponse;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -26,7 +26,7 @@ class AuthController extends Controller
     {
         try {
             Log::info('Début de l\'inscription', ['email' => $request->email]);
-    
+
             $validator = Validator::make($request->all(), [
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -49,7 +49,7 @@ class AuthController extends Controller
                 'password.confirmed' => 'Les mots de passe ne correspondent pas',
                 'phone_number.regex' => 'Le numéro de téléphone n\'est pas valide',
             ]);
-    
+
             if ($validator->fails()) {
                 Log::warning('Validation échouée', ['errors' => $validator->errors()->toArray()]);
                 return response()->json([
@@ -58,7 +58,7 @@ class AuthController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-    
+
             DB::beginTransaction();
             try {
                 $user = User::create([
@@ -68,13 +68,13 @@ class AuthController extends Controller
                     'phone_number' => $request->phone_number,
                     'preferences' => [],
                 ]);
-    
+
                 event(new Registered($user));
-    
+
                 $token = $user->createToken('auth_token')->plainTextToken;
-    
+
                 DB::commit();
-    
+
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Inscription réussie',
@@ -83,7 +83,6 @@ class AuthController extends Controller
                         'token' => $token
                     ]
                 ], 201);
-    
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('Erreur lors de la création de l\'utilisateur', [
@@ -92,7 +91,6 @@ class AuthController extends Controller
                 ]);
                 throw $e;
             }
-    
         } catch (\Exception $e) {
             Log::error('Exception lors de l\'inscription', [
                 'message' => $e->getMessage(),
@@ -100,7 +98,7 @@ class AuthController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Une erreur est survenue lors de l\'inscription',
@@ -117,78 +115,99 @@ class AuthController extends Controller
      * Login user
      */
     public function login(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-                'password' => 'required',
-            ], [
-                'email.required' => 'L\'email est obligatoire',
-                'email.email' => 'L\'email n\'est pas valide',
-                'password.required' => 'Le mot de passe est obligatoire',
-            ]);
-    
-            if ($validator->fails()) {
-                return $this->errorResponse($validator->errors()->first(), 422);
-            }
-    
-            if (!Auth::attempt($request->only('email', 'password'))) {
-                return $this->errorResponse('Identifiants incorrects', 401);
-            }
-    
-            $user = User::where('email', $request->email)->first();
-            
-            // Supprimer cette vérification ou la modifier selon vos besoins
-            // if (!$user->is_active) {
-            //     return $this->errorResponse('Votre compte est désactivé', 403);
-            // }
-    
-            // Supprimer les anciens tokens
-            $user->tokens()->delete();
-    
-            $token = $user->createToken('auth_token')->plainTextToken;
-    
-            return $this->successResponse([
-                'user' => $user,
-                'token' => $token
-            ], 'Connexion réussie');
-    
-        } catch (\Exception $e) {
-            Log::error('Erreur lors de la connexion', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return $this->errorResponse('Une erreur est survenue lors de la connexion', 500);
-        }
-    }
-    /**
-     * Logout user
-     */
-    public function logout(Request $request)
 {
     try {
-        if ($request->user()) {
-            $request->user()->tokens()->delete();
-            
+        Log::info('Tentative de connexion', ['email' => $request->email]);
+        
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            Log::warning('Validation échouée', ['errors' => $validator->errors()->toArray()]);
             return response()->json([
-                'status' => 'success',
-                'message' => 'Déconnexion réussie'
-            ]);
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors()
+            ], 422);
         }
+
+        // Vérifier si l'utilisateur existe
+        $user = User::where('email', $request->email)->first();
         
+        if (!$user) {
+            Log::warning('Utilisateur non trouvé', ['email' => $request->email]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Identifiants incorrects'
+            ], 401);
+        }
+
+        // Vérifier le mot de passe
+        if (!Hash::check($request->password, $user->password)) {
+            Log::warning('Mot de passe incorrect', ['email' => $request->email]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Identifiants incorrects'
+            ], 401);
+        }
+
+        // Supprimer les anciens tokens
+        $user->tokens()->delete();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+        
+        Log::info('Connexion réussie', ['email' => $request->email, 'user_id' => $user->id]);
+
         return response()->json([
-            'status' => 'error',
-            'message' => 'Non authentifié'
-        ], 401);
-        
+            'status' => 'success',
+            'message' => 'Connexion réussie',
+            'data' => [
+                'user' => $user,
+                'token' => $token
+            ]
+        ]);
+
     } catch (\Exception $e) {
+        Log::error('Erreur lors de la connexion', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
         return response()->json([
             'status' => 'error',
-            'message' => 'Une erreur est survenue lors de la déconnexion',
+            'message' => 'Une erreur est survenue lors de la connexion',
             'debug' => config('app.debug') ? $e->getMessage() : null
         ], 500);
     }
 }
+    /**
+     * Logout user
+     */
+    public function logout(Request $request)
+    {
+        try {
+            if ($request->user()) {
+                $request->user()->tokens()->delete();
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Déconnexion réussie'
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Non authentifié'
+            ], 401);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Une erreur est survenue lors de la déconnexion',
+                'debug' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 
     /**
      * Get authenticated user
@@ -219,30 +238,29 @@ class AuthController extends Controller
                 'avatar.max' => 'L\'image ne doit pas dépasser 1Mo',
                 'avatar.mimes' => 'L\'image doit être au format jpeg, png, jpg ou gif',
             ]);
-    
+
             if ($validator->fails()) {
                 return $this->errorResponse($validator->errors()->first(), 422);
             }
-    
+
             $user = $request->user();
-    
+
             if ($request->hasFile('avatar')) {
                 // Supprimer l'ancien avatar s'il existe
                 if ($user->avatar) {
                     Storage::disk('public')->delete($user->avatar);
                 }
-                
+
                 $path = $request->file('avatar')->store('avatars', 'public');
                 $user->avatar = $path;
             }
-    
+
             $user->fill($request->only(['name', 'phone_number']));
             $user->save();
-    
+
             return $this->successResponse([
                 'user' => $user
             ], 'Profil mis à jour avec succès');
-    
         } catch (\Exception $e) {
             return $this->errorResponse('Une erreur est survenue lors de la mise à jour du profil', 500);
         }
@@ -288,7 +306,6 @@ class AuthController extends Controller
             $user->tokens()->delete();
 
             return $this->successResponse(null, 'Mot de passe modifié avec succès');
-
         } catch (\Exception $e) {
             return $this->errorResponse('Une erreur est survenue lors du changement de mot de passe', 500);
         }

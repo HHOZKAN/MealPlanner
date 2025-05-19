@@ -51,12 +51,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // Routes des événements
-    Route::prefix('events')->group(function () {
+   Route::prefix('events')->group(function () {
         // Routes de base des événements
-        Route::get('trashed', [EventController::class, 'trashed']);
-        Route::post('{id}/restore', [EventController::class, 'restore']);
-        Route::delete('{id}/force', [EventController::class, 'forceDelete']);
-        Route::apiResource('/', EventController::class);
+        Route::get('/', [EventController::class, 'index']);
+        Route::post('/', [EventController::class, 'store']);
+         Route::get('/{event}', [EventController::class, 'show']);
+        Route::put('/{id}', [EventController::class, 'update']);
+        Route::delete('/{id}', [EventController::class, 'destroy']);
+        
+        Route::get('/trashed', [EventController::class, 'trashed']);
+        Route::post('/{id}/restore', [EventController::class, 'restore']);
+        Route::delete('/{id}/force', [EventController::class, 'forceDelete']);
 
         // Participants
         Route::get('{event}/participants', [ParticipantController::class, 'index']);
@@ -107,4 +112,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{group}/members/{user}', [GroupController::class, 'removeMember']);
         Route::put('/{group}/preferences', [GroupController::class, 'updatePreferences']);
     });
+});
+
+Route::get('/test-connection', function () {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Connexion établie avec succès',
+        'timestamp' => now()->toIso8601String(),
+    ]);
 });
