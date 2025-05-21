@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../../presentation/providers/auth_provider.dart';
 import '../../../presentation/providers/event_provider.dart';
 import '../../../presentation/providers/app_providers.dart';
-import '../../../data/models/event_model.dart';
 import '../../widgets/loading_indicator.dart';
 import '../../widgets/error_message.dart';
 import '../../widgets/event_card.dart';
