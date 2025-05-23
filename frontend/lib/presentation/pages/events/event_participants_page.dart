@@ -241,7 +241,7 @@ class _EventParticipantsPageState extends ConsumerState<EventParticipantsPage> {
                                 _buildStatusChip(context, participant.status),
                               ],
                             ),
-                            trailing: isOrganizer && user.id != currentUser?.id
+                            trailing: isOrganizer && user.id != currentUser.id
                                 ? IconButton(
                                     icon: const Icon(Icons.delete, color: Colors.red),
                                     onPressed: () => _showRemoveParticipantDialog(participant),

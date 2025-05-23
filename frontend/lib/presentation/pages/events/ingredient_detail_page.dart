@@ -898,7 +898,7 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _isLoading ? null : () => _markAsPurchased(ingredient, currentUserAssignment!),
+              onPressed: _isLoading ? null : () => _markAsPurchased(ingredient, currentUserAssignment),
               icon: const Icon(Icons.check_circle),
               label: const Text('Marquer comme acheté'),
               style: ElevatedButton.styleFrom(

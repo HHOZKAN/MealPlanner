@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../data/models/event_model.dart';
 import '../../../presentation/providers/event_provider.dart';
 import '../../../presentation/providers/auth_provider.dart';
 import '../../widgets/loading_indicator.dart';
