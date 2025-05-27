@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:meal_planner/presentation/pages/events/event_ingredients_page.dart';
 import '../../../presentation/providers/event_provider.dart';
 import '../../../presentation/providers/auth_provider.dart';
+import '../../../presentation/providers/ingredient_provider.dart';
 import '../../widgets/loading_indicator.dart';
 import '../../widgets/error_message.dart';
 import 'edit_event_page.dart';
@@ -22,6 +24,15 @@ class EventDetailPage extends ConsumerStatefulWidget {
 
 class _EventDetailPageState extends ConsumerState<EventDetailPage> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh ingredients when page is loaded
+    Future.microtask(() {
+      ref.refresh(ingredientsStateProvider(widget.eventId));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +77,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                               );
                               if (result == true) {
                                 ref.refresh(eventProvider(widget.eventId));
+                                ref.refresh(ingredientsStateProvider(widget.eventId));
                               }
                             },
                           ),
@@ -128,19 +140,19 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           children: [
             // Event Title and Emoji
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 children: [
                   Text(
                     event.emoji ?? '🏖️',
-                    style: const TextStyle(fontSize: 48),
+                    style: const TextStyle(fontSize: 36),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     event.title,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
@@ -152,17 +164,17 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
             
             // Custom Segmented Control
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Container(
-                height: 44,
+                height: 36,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
@@ -177,16 +189,82 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
             ),
             
             // Content
-            Expanded(
-              child: IndexedStack(
+            if (_selectedIndex == 0) ...[
+              // Expenses Summary
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final ingredientsState = ref.watch(ingredientsStateProvider(widget.eventId));
+                    final notifier = ref.watch(ingredientsStateProvider(widget.eventId).notifier);
+                    final List ingredients = ingredientsState == IngredientsState.loaded ? notifier.ingredients : <dynamic>[];
+                    final myExpenses = ingredients
+                        .where((i) => i.assignments?.any((a) =>
+                            a.userId == ref.read(currentUserProvider)?.id &&
+                            a.status == 'purchased') ?? false)
+                        .fold(0.0, (sum, i) => sum + (i.actualPrice ?? 0));
+                    final totalExpenses = ingredients
+                        .where((i) => i.status == 'purchased')
+                        .fold(0.0, (sum, i) => sum + (i.actualPrice ?? 0));
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          children: [
+                            Text(
+                              'Mes dépenses',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(myExpenses)}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              'Dépenses totales',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(totalExpenses)}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              // Ingredients List with expanded height
+              Expanded(
+                child: EventIngredientsPage(eventId: event.id),
+              ),
+            ] else ...[
+              IndexedStack(
                 index: _selectedIndex,
                 children: [
-                  EventIngredientsPage(eventId: event.id),
                   const Center(child: Text('Soldes - à implémenter')),
                   const Center(child: Text('Photos - à implémenter')),
                 ],
               ),
-            ),
+            ],
           ],
         ),
         loading: () => const LoadingIndicator(),
@@ -198,17 +276,28 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
       floatingActionButton: eventAsync.when(
         data: (event) {
           if (_selectedIndex == 0) {
-            return FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddIngredientPage(eventId: event.id),
-                  ),
-                ).then((_) => ref.refresh(eventProvider(widget.eventId)));
-              },
-              backgroundColor: Colors.black,
-              child: const Icon(Icons.add, color: Colors.white),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              height: 48,
+              width: 48,
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddIngredientPage(eventId: event.id),
+                    ),
+                  ).then((_) async {
+                    // Refresh both event and ingredients data
+                    ref.refresh(eventProvider(widget.eventId));
+                    // Force reload ingredients
+                    await ref.read(ingredientsStateProvider(widget.eventId).notifier).loadIngredients();
+                  });
+                },
+                backgroundColor: Colors.black,
+                elevation: 2,
+                child: const Icon(Icons.add, color: Colors.white, size: 24),
+              ),
             );
           }
           return null;
@@ -223,7 +312,13 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
     final isSelected = _selectedIndex == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedIndex = index),
+        onTap: () {
+          setState(() => _selectedIndex = index);
+          // Refresh ingredients when switching to ingredients tab
+          if (index == 0) {
+            ref.refresh(ingredientsStateProvider(widget.eventId));
+          }
+        },
         child: Container(
           decoration: BoxDecoration(
             color: isSelected ? Colors.black : Colors.transparent,

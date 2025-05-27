@@ -69,7 +69,8 @@ class IngredientsStateNotifier extends StateNotifier<IngredientsState> {
         estimatedPrice: estimatedPrice,
         notes: notes,
       );
-      _ingredients = [ingredient, ..._ingredients];
+      // Reload all ingredients to ensure consistency
+      _ingredients = await _ingredientRepository.getIngredients(_eventId);
       state = IngredientsState.loaded;
     } catch (e) {
       _errorMessage = e.toString();
@@ -201,24 +202,15 @@ final ingredientAssignmentsProvider = Provider.family<List<IngredientAssignmentM
   );
 });
 
-// Constantes pour les unités d'ingrédients
+// Constantes pour les unités d'ingrédients (alignées avec le backend Ingredient::UNITS)
 final ingredientUnitsProvider = Provider<Map<String, String>>((ref) {
   return {
     'g': 'Grammes',
     'kg': 'Kilogrammes',
     'ml': 'Millilitres',
     'l': 'Litres',
-    'unit': 'Unité(s)',
-    'tbsp': 'Cuillère(s) à soupe',
-    'tsp': 'Cuillère(s) à café',
-    'cup': 'Tasse(s)',
-    'pinch': 'Pincée(s)',
     'piece': 'Pièce(s)',
-    'slice': 'Tranche(s)',
-    'bunch': 'Botte(s)',
-    'can': 'Boîte(s)',
-    'bottle': 'Bouteille(s)',
-    'package': 'Paquet(s)',
+    'pack': 'Paquet(s)',
   };
 });
 

@@ -20,40 +20,73 @@ class EventIngredientsPage extends ConsumerStatefulWidget {
 }
 
 class _EventIngredientsPageState extends ConsumerState<EventIngredientsPage> {
+  bool _mounted = true;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(ingredientsStateProvider(widget.eventId).notifier).loadIngredients());
+    Future.microtask(() async {
+      if (!mounted) return;
+      print('Loading ingredients for event ${widget.eventId}');
+      try {
+        await ref.read(ingredientsStateProvider(widget.eventId).notifier).loadIngredients();
+        if (!mounted) return;
+        print('Ingredients loaded successfully');
+      } catch (e) {
+        if (!mounted) return;
+        print('Error loading ingredients: $e');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _mounted = false;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    print('Building EventIngredientsPage');
+    final notifier = ref.watch(ingredientsStateProvider(widget.eventId).notifier);
     final ingredientsState = ref.watch(ingredientsStateProvider(widget.eventId));
-    final ingredients = ref.watch(ingredientsStateProvider(widget.eventId).notifier).ingredients;
+    
+    final List<IngredientModel> ingredients = ingredientsState == IngredientsState.loaded 
+        ? notifier.ingredients 
+        : <IngredientModel>[];
+    
+    print('Current state: $ingredientsState');
+    print('Ingredients count: ${ingredients.length}');
     
     return ingredientsState == IngredientsState.loading
         ? const LoadingIndicator()
         : ingredientsState == IngredientsState.error
             ? ErrorMessage(
-                message: 'Erreur lors du chargement des ingrédients',
+                message: ref.read(ingredientsStateProvider(widget.eventId).notifier).errorMessage ?? 
+                         'Erreur lors du chargement des ingrédients',
                 onRetry: () => ref.refresh(ingredientsStateProvider(widget.eventId)),
               )
-            : _buildIngredientsList(ingredients);
+            : RefreshIndicator(
+                onRefresh: () async {
+                  await ref.read(ingredientsStateProvider(widget.eventId).notifier).loadIngredients();
+                },
+                child: _buildIngredientsList(ingredients),
+              );
   }
 
   Widget _buildIngredientsList(List<IngredientModel> ingredients) {
     if (ingredients.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
-            const SizedBox(height: 16),
+            Icon(Icons.receipt_long, size: 36, color: Colors.grey),
+            SizedBox(height: 8),
             Text(
               'Aucun ingrédient',
               style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
+                fontSize: 14,
+                color: Colors.grey,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -62,127 +95,94 @@ class _EventIngredientsPageState extends ConsumerState<EventIngredientsPage> {
       );
     }
 
-    // Calculate totals
-    final myExpenses = ingredients
-        .where((i) => i.assignments?.any((a) => 
-            a.userId == ref.read(currentUserProvider)?.id && 
-            a.status == 'purchased') ?? false)
-        .fold(0.0, (sum, i) => sum + (i.actualPrice ?? 0));
-
-    final totalExpenses = ingredients
-        .where((i) => i.status == 'purchased')
-        .fold(0.0, (sum, i) => sum + (i.actualPrice ?? 0));
-
-    return Column(
-      children: [
-        // Expenses Summary
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Mes dépenses',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      itemCount: ingredients.length,
+      itemBuilder: (context, index) {
+        final ingredient = ingredients[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(myExpenses)}',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Dépenses totales',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(totalExpenses)}',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Ingredients List
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: ingredients.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final ingredient = ingredients[index];
-              final assignment = ingredient.assignments?.firstWhere(
-                (a) => a.userId == ref.read(currentUserProvider)?.id,
-                orElse: () => IngredientAssignmentModel(
-                  id: -1,
-                  ingredientId: ingredient.id,
-                  userId: -1,
-                  quantity: 0,
-                  status: '',
-                ),
-              );
-
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.euro, color: Colors.grey),
-                ),
-                title: Text(
-                  ingredient.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                subtitle: Text(
-                  'Payé par ${ingredient.assignments?.firstWhere(
-                    (a) => a.status == 'purchased',
-                    orElse: () => IngredientAssignmentModel(
-                      id: -1,
-                      ingredientId: ingredient.id,
-                      userId: -1,
-                      quantity: 0,
-                      status: '',
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  ).user?.name ?? 'Non assigné'}',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
+                    child: Center(
+                      child: Text(
+                        ingredient.emoji ?? '💶',
+                        style: const TextStyle(
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                trailing: Text(
-                  ingredient.actualPrice != null
-                      ? NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(ingredient.actualPrice)
-                      : '-',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: ingredient.actualPrice != null ? Colors.black : Colors.grey,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                            Text(
+                              ingredient.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Payé par ${ingredient.assignments?.firstWhere(
+                                (a) => a.status == 'purchased',
+                                orElse: () => IngredientAssignmentModel(
+                                  id: -1,
+                                  ingredientId: ingredient.id,
+                                  userId: -1,
+                                  quantity: 0,
+                                  status: '',
+                                ),
+                              ).user?.name ?? 'Non assigné'}',
+                              style: const TextStyle(
+                                color: Color(0xFF666666),
+                                fontSize: 12,
+                              ),
+                            ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                  Text(
+                    ingredient.actualPrice != null
+                        ? NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(ingredient.actualPrice)
+                        : '-',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: ingredient.actualPrice != null ? Colors.black : const Color(0xFF666666),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

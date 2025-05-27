@@ -49,7 +49,7 @@ class IngredientController extends Controller
     public function store(Request $request, Event $event)
     {
         try {
-            if (!$this->canManageEvent($event)) {
+            if (!$this->canAccessEvent($event)) {
                 return $this->errorResponse('Non autorisé', 403);
             }
 
@@ -252,6 +252,7 @@ class IngredientController extends Controller
             'actual_price' => $ingredient->actual_price,
             'status' => $ingredient->status,
             'notes' => $ingredient->notes,
+            'emoji' => $ingredient->emoji ?? '🛒',
             'added_by' => $ingredient->addedBy,
             'assignments' => $ingredient->assignments,
             'created_at' => $ingredient->created_at,

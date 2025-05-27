@@ -10,25 +10,35 @@ class IngredientRepository {
   
   Future<List<IngredientModel>> getIngredients(int eventId) async {
     try {
+      print('Fetching ingredients for event $eventId');
       final response = await _dioClient.get(
         ApiConstants.eventIngredients.replaceAll('{id}', eventId.toString()),
       );
       
+      print('Response received: ${response.data}');
       final data = response.data;
       
       if (data['status'] == 'success') {
-        return List<IngredientModel>.from(
+        final ingredients = List<IngredientModel>.from(
           data['data'].map((x) => IngredientModel.fromJson(x))
         );
+        print('Successfully parsed ${ingredients.length} ingredients');
+        return ingredients;
       } else {
+        print('API returned error status: ${data['message']}');
         throw Exception(data['message'] ?? 'Erreur lors de la récupération des ingrédients');
       }
     } catch (e) {
+      print('Error fetching ingredients: $e');
       if (e is DioException) {
         final data = e.response?.data;
-        throw Exception(data?['message'] ?? 'Erreur lors de la récupération des ingrédients');
+        final error = data?['message'] ?? 'Erreur lors de la récupération des ingrédients';
+        print('DioException: $error');
+        print('Response: ${e.response}');
+        print('Request: ${e.requestOptions.uri}');
+        throw Exception(error);
       }
-      throw Exception('Erreur lors de la récupération des ingrédients');
+      throw Exception('Erreur lors de la récupération des ingrédients: $e');
     }
   }
   

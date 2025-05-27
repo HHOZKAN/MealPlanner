@@ -45,6 +45,7 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
     required DateTime date,
     String? location,
     required String type,
+    String? emoji,
   }) async {
     try {
       state = EventsState.loading;

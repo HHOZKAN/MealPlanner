@@ -48,8 +48,28 @@ class DioClient {
     );
   }
   
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {
-    return _dio.get(path, queryParameters: queryParameters);
+  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+    print('GET request to: ${ApiConstants.baseUrl}$path');
+    print('Query parameters: $queryParameters');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      print('Auth token present: ${token != null}');
+      
+      final response = await _dio.get(path, queryParameters: queryParameters);
+      print('Response status: ${response.statusCode}');
+      print('Response data: ${response.data}');
+      return response;
+    } catch (e) {
+      print('Error in GET request: $e');
+      if (e is DioException) {
+        print('DioException details:');
+        print('  Response: ${e.response}');
+        print('  Request URL: ${e.requestOptions.uri}');
+        print('  Headers: ${e.requestOptions.headers}');
+      }
+      rethrow;
+    }
   }
   
 Future<Response> post(String path, {dynamic data}) async {

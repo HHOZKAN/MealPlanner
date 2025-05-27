@@ -1,6 +1,36 @@
 import 'dart:convert';
 import 'user_model.dart';
 
+// Helper functions to safely parse numbers from various formats
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    return int.tryParse(value.replaceAll(RegExp(r'[^0-9-]'), ''));
+  }
+  return null;
+}
+
+int _parseRequiredInt(dynamic value, {int defaultValue = 0}) {
+  return _parseInt(value) ?? defaultValue;
+}
+
+double? _parseDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    // Remove any currency symbols or spaces
+    final cleanString = value.replaceAll(RegExp(r'[^0-9.-]'), '');
+    return double.tryParse(cleanString);
+  }
+  return null;
+}
+
+double _parseRequiredDouble(dynamic value, {double defaultValue = 0.0}) {
+  return _parseDouble(value) ?? defaultValue;
+}
+
 class IngredientModel {
   final int id;
   final int eventId;
@@ -16,6 +46,7 @@ class IngredientModel {
   final List<IngredientAssignmentModel>? assignments;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? emoji;
   
   IngredientModel({
     required this.id,
@@ -32,20 +63,21 @@ class IngredientModel {
     this.assignments,
     this.createdAt,
     this.updatedAt,
+    this.emoji,
   });
   
   factory IngredientModel.fromJson(Map<String, dynamic> json) {
     return IngredientModel(
-      id: json['id'],
-      eventId: json['event_id'],
-      name: json['name'],
-      quantity: json['quantity'].toDouble(),
-      unit: json['unit'],
-      estimatedPrice: json['estimated_price']?.toDouble(),
-      actualPrice: json['actual_price']?.toDouble(),
-      status: json['status'],
+      id: _parseRequiredInt(json['id']),
+      eventId: _parseRequiredInt(json['event_id']), // Default to 0 if missing
+      name: json['name'] ?? '',
+      quantity: _parseRequiredDouble(json['quantity']),
+      unit: json['unit'] ?? '',
+      estimatedPrice: _parseDouble(json['estimated_price']),
+      actualPrice: _parseDouble(json['actual_price']),
+      status: json['status'] ?? 'needed',
       notes: json['notes'],
-      addedBy: json['added_by'],
+      addedBy: _parseRequiredInt(json['added_by']),
       addedByUser: json['added_by_user'] != null 
           ? UserModel.fromJson(json['added_by_user']) 
           : null,
@@ -60,6 +92,7 @@ class IngredientModel {
       updatedAt: json['updated_at'] != null 
           ? DateTime.parse(json['updated_at']) 
           : null,
+      emoji: json['emoji'] ?? '🛒',
     );
   }
   
@@ -79,6 +112,7 @@ class IngredientModel {
       'assignments': assignments?.map((x) => x.toJson()).toList(),
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      'emoji': emoji,
     };
   }
   
@@ -117,12 +151,12 @@ class IngredientAssignmentModel {
   
   factory IngredientAssignmentModel.fromJson(Map<String, dynamic> json) {
     return IngredientAssignmentModel(
-      id: json['id'],
-      ingredientId: json['ingredient_id'],
-      userId: json['user_id'],
-      quantity: json['quantity'].toDouble(),
-      status: json['status'],
-      pricePaid: json['price_paid']?.toDouble(),
+      id: _parseRequiredInt(json['id']),
+      ingredientId: _parseRequiredInt(json['ingredient_id']),
+      userId: _parseRequiredInt(json['user_id']),
+      quantity: _parseRequiredDouble(json['quantity']),
+      status: json['status'] ?? 'pending',
+      pricePaid: _parseDouble(json['price_paid']),
       storeName: json['store_name'],
       receiptImage: json['receipt_image'],
       user: json['user'] != null 

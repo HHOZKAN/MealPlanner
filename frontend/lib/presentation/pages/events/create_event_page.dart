@@ -19,17 +19,28 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedType = 'dinner';
-  
+  String _selectedEmoji = '🍽️';
   bool _isLoading = false;
   String? _errorMessage;
-  
+
   final List<Map<String, dynamic>> _eventTypes = [
-    {'value': 'dinner', 'label': 'Dîner', 'icon': Icons.dinner_dining, 'color': Colors.deepOrange},
-    {'value': 'lunch', 'label': 'Déjeuner', 'icon': Icons.lunch_dining, 'color': Colors.amber},
-    {'value': 'brunch', 'label': 'Brunch', 'icon': Icons.brunch_dining, 'color': Colors.lightGreen},
-    {'value': 'breakfast', 'label': 'Petit-déjeuner', 'icon': Icons.free_breakfast, 'color': Colors.brown},
-    {'value': 'other', 'label': 'Autre', 'icon': Icons.restaurant, 'color': Colors.purple},
+    {'value': 'dinner', 'label': 'Dîner', 'icon': Icons.dinner_dining, 'color': const Color(0xFFFF5722)},
+    {'value': 'lunch', 'label': 'Déjeuner', 'icon': Icons.lunch_dining, 'color': const Color(0xFFFF5722)},
+    {'value': 'brunch', 'label': 'Brunch', 'icon': Icons.brunch_dining, 'color': const Color(0xFFFF5722)},
+    {'value': 'breakfast', 'label': 'Petit-déjeuner', 'icon': Icons.free_breakfast, 'color': const Color(0xFFFF5722)},
+    {'value': 'other', 'label': 'Autre', 'icon': Icons.restaurant, 'color': const Color(0xFFFF5722)},
   ];
+
+  final List<String> _commonEmojis = ['🍽️', '🍖', '🥘', '🥗', '🍝', '🍕', '🌮', '🥪', '🍱', '🍲'];
+
+  // New: Dropdown selected value for event type
+  String? _dropdownSelectedType;
+
+  @override
+  void initState() {
+    super.initState();
+    _dropdownSelectedType = _selectedType;
+  }
 
   @override
   void dispose() {
@@ -37,6 +48,81 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     _descriptionController.dispose();
     _locationController.dispose();
     super.dispose();
+  }
+
+  void _showEmojiPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Choisir un emoji',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 20,
+              runSpacing: 20,
+              children: _commonEmojis.map((emoji) => GestureDetector(
+                onTap: () {
+                  setState(() => _selectedEmoji = emoji);
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(
+                        fontSize: 40,
+                        color: Color(0xFFFF5722),
+                      ),
+                    ),
+                  ),
+                ),
+              )).toList(),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -96,6 +182,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
           date: _getDateTime(),
           location: _locationController.text.trim(),
           type: _selectedType,
+          emoji: _selectedEmoji,
         );
         
         if (mounted) {
@@ -124,14 +211,59 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     final dateFormat = DateFormat('dd MMMM yyyy', 'fr_FR');
     
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Créer un événement'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: Container(
+          color: Colors.white,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFFF5722)),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Emoji Selector
+            Center(
+              child: GestureDetector(
+                onTap: _showEmojiPicker,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _selectedEmoji,
+                      style: const TextStyle(
+                        fontSize: 48,
+                        color: Color(0xFFFF5722),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Message d'erreur
             if (_errorMessage != null)
               Container(
@@ -147,14 +279,32 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   style: TextStyle(color: Colors.red.shade800),
                 ),
               ),
-            
+
             // Titre
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Color(0xFF2D3142)),
+              decoration: InputDecoration(
                 labelText: 'Titre de l\'événement',
+                labelStyle: const TextStyle(color: Color(0xFF2D3142)),
                 hintText: 'Ex: Dîner chez Marie',
-                prefixIcon: Icon(Icons.title),
+                hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                prefixIcon: const Icon(Icons.title, color: Color(0xFFFF5722)),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -168,10 +318,28 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             // Description
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Color(0xFF2D3142)),
+              decoration: InputDecoration(
                 labelText: 'Description (optionnelle)',
+                labelStyle: const TextStyle(color: Color(0xFF2D3142)),
                 hintText: 'Ex: Apportez votre spécialité !',
-                prefixIcon: Icon(Icons.description),
+                hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                prefixIcon: const Icon(Icons.description, color: Color(0xFFFF5722)),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                ),
               ),
               maxLines: 3,
             ),
@@ -180,52 +348,61 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             // Type d'événement
             Text(
               'Type d\'événement',
-              style: theme.textTheme.titleMedium,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2D3142),
+              ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _eventTypes.map((type) {
-                final isSelected = _selectedType == type['value'];
-                final color = type['color'] as Color;
-                return ChoiceChip(
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
+            DropdownButtonFormField<String>(
+              value: _dropdownSelectedType,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                ),
+              ),
+              items: _eventTypes.map((type) {
+                return DropdownMenuItem<String>(
+                  value: type['value'] as String,
+                  child: Row(
                     children: [
-                      Icon(
-                        type['icon'] as IconData,
-                        size: 18,
-                        color: isSelected ? Colors.white : color,
-                      ),
+                      Icon(type['icon'] as IconData, color: const Color(0xFFFF5722)),
                       const SizedBox(width: 8),
-                      Text(type['label'] as String),
+                      Text(type['label'] as String, style: const TextStyle(color: Color(0xFF2D3142))),
                     ],
                   ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedType = type['value'] as String;
-                      });
-                    }
-                  },
-                  backgroundColor: Colors.transparent,
-                  selectedColor: color,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
-                  ),
-                  elevation: isSelected ? 3 : 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 );
               }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _dropdownSelectedType = value;
+                  _selectedType = value ?? 'dinner';
+                });
+              },
             ),
             const SizedBox(height: 24),
             
             // Date et heure
             Text(
               'Date et heure',
-              style: theme.textTheme.titleMedium,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2D3142),
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -234,11 +411,27 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   child: InkWell(
                     onTap: () => _selectDate(context),
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.calendar_today),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFFFF5722)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                        ),
                       ),
-                      child: Text(dateFormat.format(_selectedDate)),
+                      child: Text(
+                        dateFormat.format(_selectedDate),
+                        style: const TextStyle(
+                          color: Color(0xFF2D3142),
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -247,11 +440,27 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   child: InkWell(
                     onTap: () => _selectTime(context),
                     child: InputDecorator(
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.access_time),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.access_time, color: Color(0xFFFF5722)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                        ),
                       ),
-                      child: Text(_selectedTime.format(context)),
+                      child: Text(
+                        _selectedTime.format(context),
+                        style: const TextStyle(
+                          color: Color(0xFF2D3142),
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -262,10 +471,28 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             // Lieu
             TextFormField(
               controller: _locationController,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Color(0xFF2D3142)),
+              decoration: InputDecoration(
                 labelText: 'Lieu (optionnel)',
+                labelStyle: const TextStyle(color: Color(0xFF2D3142)),
                 hintText: 'Ex: 12 rue des Lilas, Paris',
-                prefixIcon: Icon(Icons.location_on),
+                hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF5722)),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -276,9 +503,32 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _createEvent,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF5722), // <-- couleur du bouton
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 0,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
                 child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Créer l\'événement'),
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Créer l\'événement',
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],

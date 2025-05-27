@@ -65,6 +65,7 @@ class EventRepository {
     required DateTime date,
     String? location,
     required String type,
+    String? emoji,
   }) async {
     try {
       final response = await _dioClient.post(
@@ -75,6 +76,7 @@ class EventRepository {
           'date': date.toIso8601String(),
           'location': location,
           'type': type,
+          'emoji': emoji,
         },
       );
 

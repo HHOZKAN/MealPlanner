@@ -21,7 +21,6 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
   @override
   void initState() {
     super.initState();
-    // Charger les événements au chargement de la page
     Future.microtask(() => ref.read(eventsStateProvider.notifier).loadEvents());
   }
 
@@ -32,25 +31,33 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
     final eventsState = ref.watch(eventsStateProvider);
     final events = ref.watch(eventsStateProvider.notifier).events;
     
-    // Filtrer les événements à venir
     final upcomingEvents = events
         .where((e) => e.date.isAfter(DateTime.now()))
         .toList()
       ..sort((a, b) => a.date.compareTo(b.date));
     
-    // Prendre les 3 premiers événements à venir
     final nextEvents = upcomingEvents.take(3).toList();
     
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Tableau de bord'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Tableau de bord',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF2D3142)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Color(0xFF2D3142)),
             onPressed: () => ref.read(eventsStateProvider.notifier).loadEvents(),
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Color(0xFF2D3142)),
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
@@ -87,18 +94,29 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Carte de bienvenue
               if (currentUser != null)
-                Card(
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
                             CircleAvatar(
-                              backgroundColor: theme.colorScheme.primary,
+                              backgroundColor: const Color(0xFFFF5722),
                               radius: 30,
                               child: currentUser.avatarUrl != null
                                   ? ClipOval(
@@ -121,11 +139,14 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                                     'Bienvenue, ${currentUser.name}',
                                     style: theme.textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF2D3142),
                                     ),
                                   ),
                                   Text(
                                     currentUser.email,
-                                    style: theme.textTheme.bodyMedium,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -143,7 +164,11 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                           icon: const Icon(Icons.add),
                           label: const Text('Créer un événement'),
                           style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF5722),
                             minimumSize: const Size(double.infinity, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ],
@@ -152,14 +177,17 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                 ),
               const SizedBox(height: 24),
               
-              // Prochains événements
-              Text(
-                'Prochains événements',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'Prochains événements',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF2D3142),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               
               if (eventsState == EventsState.loading)
                 const LoadingIndicator(message: 'Chargement des événements...')
@@ -169,30 +197,45 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                   onRetry: () => ref.read(eventsStateProvider.notifier).loadEvents(),
                 )
               else if (nextEvents.isEmpty)
-                Card(
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.event_busy,
                           size: 60,
-                          color: Colors.grey,
+                          color: Colors.grey[400],
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Aucun événement à venir',
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2D3142),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Créez votre premier événement ou rejoignez un événement existant',
                           textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         ElevatedButton.icon(
                           onPressed: () {
                             Navigator.push(
@@ -202,6 +245,12 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                           },
                           icon: const Icon(Icons.add),
                           label: const Text('Créer un événement'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF5722),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -221,30 +270,50 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                 ),
               
               if (nextEvents.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 TextButton(
                   onPressed: () {
-                    // Utiliser le provider pour changer l'onglet
                     ref.read(selectedTabIndexProvider.notifier).state = 1;
                   },
-                  child: const Text('Voir tous les événements'),
+                  child: Text(
+                    'Voir tous les événements',
+                    style: TextStyle(
+                      color: const Color(0xFFFF5722),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               
-              // Statistiques
-              Text(
-                'Statistiques',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'Statistiques',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF2D3142),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               
-              Card(
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       _buildStatisticRow(
@@ -253,14 +322,14 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                         title: 'Événements organisés',
                         value: events.where((e) => e.organizerId == currentUser?.id).length.toString(),
                       ),
-                      const Divider(),
+                      const Divider(height: 32),
                       _buildStatisticRow(
                         context,
                         icon: Icons.people,
                         title: 'Événements participés',
                         value: events.where((e) => e.organizerId != currentUser?.id).length.toString(),
                       ),
-                      const Divider(),
+                      const Divider(height: 32),
                       _buildStatisticRow(
                         context,
                         icon: Icons.calendar_today,
@@ -272,28 +341,43 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                 ),
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               
-              // Activité récente
-              Text(
-                'Activité récente',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'Activité récente',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF2D3142),
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               
-              Card(
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: events.isNotEmpty ? min(events.length, 3) : 1,
-                  separatorBuilder: (context, index) => const Divider(),
+                  separatorBuilder: (context, index) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     if (events.isEmpty) {
-                      return const ListTile(
-                        leading: Icon(Icons.info_outline),
-                        title: Text('Aucune activité récente'),
+                      return ListTile(
+                        leading: Icon(Icons.info_outline, color: Colors.grey[400]),
+                        title: const Text('Aucune activité récente'),
                       );
                     }
                     
@@ -301,33 +385,69 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
                     final dateFormat = DateFormat('dd/MM/yyyy');
                     
                     return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: _getEventTypeColor(event.type),
-                        child: Icon(
-                          _getEventTypeIcon(event.type),
-                          color: Colors.white,
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: event.emoji != null
+                              ? Text(
+                                  event.emoji!,
+                                  style: const TextStyle(fontSize: 20),
+                                )
+                              : Icon(
+                                  _getEventTypeIcon(event.type),
+                                  color: const Color(0xFFFF5722),
+                                ),
                         ),
                       ),
-                      title: Text(event.title),
-                      subtitle: Text('${dateFormat.format(event.date)} - ${event.status}'),
-                      trailing: const Icon(Icons.chevron_right),
+                      title: Text(
+                        event.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2D3142),
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${dateFormat.format(event.date)} - ${event.status}',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      trailing: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.chevron_right,
+                          color: Color(0xFFFF5722),
+                          size: 20,
+                        ),
+                      ),
                       onTap: () => Navigator.pushNamed(context, '/events/${event.id}'),
                     );
                   },
                 ),
               ),
+              const SizedBox(height: 80), // Space for FAB
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const CreateEventPage()),
           );
         },
-        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFFFF5722),
+        icon: const Icon(Icons.add),
+        label: const Text('Nouvel événement'),
       ),
     );
   }
@@ -338,33 +458,40 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
     required String title,
     required String value,
   }) {
-    final theme = Theme.of(context);
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(
+    return Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
             icon,
-            color: theme.colorScheme.primary,
-            size: 28,
+            color: const Color(0xFFFF5722),
+            size: 24,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF2D3142),
             ),
           ),
-          Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFF5722),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
   
@@ -380,21 +507,6 @@ class _DashboardHomeTabState extends ConsumerState<DashboardHomeTab> {
         return Icons.free_breakfast;
       default:
         return Icons.restaurant;
-    }
-  }
-  
-  Color _getEventTypeColor(String type) {
-    switch (type) {
-      case 'dinner':
-        return Colors.deepOrange;
-      case 'lunch':
-        return Colors.amber;
-      case 'brunch':
-        return Colors.lightGreen;
-      case 'breakfast':
-        return Colors.brown;
-      default:
-        return Colors.purple;
     }
   }
 }

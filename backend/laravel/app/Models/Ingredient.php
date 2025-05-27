@@ -19,7 +19,8 @@ class Ingredient extends Model
         'actual_price',
         'added_by',
         'status',
-        'notes'
+        'notes',
+        'emoji'
     ];
 
     protected $casts = [

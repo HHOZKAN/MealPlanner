@@ -22,7 +22,7 @@ class _AddIngredientPageState extends ConsumerState<AddIngredientPage> {
   final _priceController = TextEditingController();
   final _notesController = TextEditingController();
   
-  String _selectedUnit = 'unit';
+  String _selectedUnit = 'g';  // Default to grams as it's a valid backend unit
   bool _isLoading = false;
   String? _errorMessage;
   
