@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:math' show pi, sin, cos;
+import 'package:google_fonts/google_fonts.dart';
 import '../../../presentation/providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -18,6 +18,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to auth state changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listenManual(authStateProvider, (previous, next) {
+        if (next == AuthState.authenticated) {
+          context.go('/'); // Navigate to dashboard when authenticated
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -51,6 +64,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
     }
   }
+
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -110,174 +124,116 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final creamColor = const Color(0xFFF9F4E9);
     final orangeColor = const Color(0xFFF15A29);
-    final blueColor = const Color(0xFF8AC6D1);
-    final pinkColor = const Color(0xFFF7B2B7);
-    final greenColor = const Color(0xFF6B6B3F);
-    final mustardColor = const Color(0xFFCFA14A);
-
-    final authState = ref.watch(authStateProvider);
+    final greyColor = const Color(0xFFBDBDBD);
+    final blackColor = Colors.black87;
+    
+    // Styles de texte avec Google Fonts
+    final titleStyle = GoogleFonts.poppins(
+      fontSize: 32,
+      fontWeight: FontWeight.bold,
+      color: blackColor,
+    );
+    
+    final subtitleStyle = GoogleFonts.poppins(
+      fontSize: 16,
+      color: orangeColor.withOpacity(0.6),
+      fontWeight: FontWeight.w400,
+    );
+    
+    final buttonTextStyle = GoogleFonts.poppins(
+      fontSize: 16,
+      color: orangeColor,
+      fontWeight: FontWeight.w600,
+    );
 
     return Scaffold(
       backgroundColor: creamColor,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(0), // Hauteur minimale
+        preferredSize: const Size.fromHeight(0),
         child: AppBar(
           backgroundColor: creamColor,
           elevation: 0,
-          toolbarHeight: 0, // Hauteur minimale
+          toolbarHeight: 0,
           automaticallyImplyLeading: false,
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          return Stack(
-            children: [
-              // Top right shape
-              Positioned(
-                top: 0, // Changé de -width * 0.1 à 0
-                right: 0, // Changé de -width * 0.1 à 0
-                child: _CornerShape(
-                  color: orangeColor,
-                  size: width * 0.4,
-                  cornerPosition: CornerPosition.topRight,
-                ),
-              ),
-              // Bottom right shape
-              Positioned(
-                bottom: -width * 0.1,
-                right: -width * 0.1,
-                child: _CornerShape(
-                  color: orangeColor.withOpacity(0.8),
-                  size: width * 0.45,
-                  cornerPosition: CornerPosition.bottomRight,
-                ),
-              ),
-              // Top left shape
-              Positioned(
-                top: -10,
-                left: 0,
-                child: _CornerShape(
-                  color: blueColor,
-                  size: width * 0.35,
-                  cornerPosition: CornerPosition.topLeft,
-                ),
-              ),
-              // Bottom left shape
-              Positioned(
-                bottom: -width * 0.1,
-                left: -width * 0.1,
-                child: _CornerShape(
-                  color: pinkColor,
-                  size: width * 0.4,
-                  cornerPosition: CornerPosition.bottomLeft,
-                ),
-              ),
-              Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Form(
+      body: SafeArea(
+        child: Stack(
+          fit: StackFit.expand, // Assure que Stack remplit tout l'espace
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.go('/splash'),
+                    padding: const EdgeInsets.all(0),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Login', style: titleStyle),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Connect to your account to continue',
+                    style: subtitleStyle,
+                  ),
+                  const SizedBox(height: 40),
+
+                  if (_errorMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade100),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: GoogleFonts.poppins(
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  Form(
                     key: _formKey,
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Title "Meal Planner" with multi-color letters
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Roboto',
-                            ),
-                            children: [
-                              TextSpan(
-                                  text: 'M',
-                                  style: TextStyle(color: blueColor)),
-                              TextSpan(
-                                  text: 'e',
-                                  style: TextStyle(color: orangeColor)),
-                              TextSpan(
-                                  text: 'a',
-                                  style: TextStyle(color: mustardColor)),
-                              TextSpan(
-                                  text: 'l',
-                                  style: TextStyle(color: greenColor)),
-                              const TextSpan(text: '\n'),
-                              TextSpan(
-                                  text: 'P',
-                                  style: TextStyle(color: orangeColor)),
-                              TextSpan(
-                                  text: 'l',
-                                  style: TextStyle(color: blueColor)),
-                              TextSpan(
-                                  text: 'a',
-                                  style: TextStyle(color: pinkColor)),
-                              TextSpan(
-                                  text: 'n',
-                                  style: TextStyle(color: greenColor)),
-                              TextSpan(
-                                  text: 'n',
-                                  style: TextStyle(color: mustardColor)),
-                              TextSpan(
-                                  text: 'e',
-                                  style: TextStyle(color: orangeColor)),
-                              TextSpan(
-                                  text: 'r',
-                                  style: TextStyle(color: blueColor)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 48),
-
-                        // Error message
-                        if (_errorMessage != null ||
-                            authState == AuthState.error)
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _errorMessage ??
-                                  ref
-                                      .read(authStateProvider.notifier)
-                                      .errorMessage ??
-                                  'Une erreur est survenue',
-                              style: TextStyle(color: Colors.red.shade800),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        if (_errorMessage != null ||
-                            authState == AuthState.error)
-                          const SizedBox(height: 16),
-
-                        // Email TextField
                         _buildTextField(
                           controller: _emailController,
-                          label: 'Email',
-                          icon: Icons.email,
+                          label: 'Email Address',
+                          icon: Icons.email_outlined,
                           color: orangeColor,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre email';
+                              return 'Please enter your email';
                             }
                             if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                                 .hasMatch(value)) {
-                              return 'Veuillez entrer un email valide';
+                              return 'Please enter a valid email';
                             }
                             return null;
                           },
                         ),
-                        const SizedBox(height: 24),
-
-                        // Password TextField
+                        const SizedBox(height: 20),
                         _buildTextField(
                           controller: _passwordController,
-                          label: 'Mot de passe',
-                          icon: Icons.lock,
+                          label: 'Password',
+                          icon: Icons.lock_outline,
                           color: orangeColor,
                           isPassword: true,
                           obscureText: _obscurePassword,
@@ -288,283 +244,110 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           },
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre mot de passe';
+                              return 'Please enter your password';
                             }
                             return null;
                           },
                         ),
-                        const SizedBox(height: 36),
-
-                        // Login button
-                        OutlinedButton(
-                          onPressed: _isLoading ? null : _login,
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: orangeColor),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 20, horizontal: 100),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  'Se connecter',
-                                  style: TextStyle(
-                                      color: orangeColor, fontSize: 16),
-                                ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Sign up text
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Pas encore de compte ? ",
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            GestureDetector(
-                              onTap: () => context.go('/register'),
-                              child: Text(
-                                'S\'inscrire',
-                                style: TextStyle(
-                                  color: orangeColor,
-                                  decoration: TextDecoration.underline,
-                                  fontWeight: FontWeight.bold
-                                ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              // TODO: Implement forgot password
+                            },
+                            child: Text(
+                              'Forgot Password?',
+                              style: GoogleFonts.poppins(
+                                color: orangeColor,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: orangeColor,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    'Login',
+                                    style: buttonTextStyle.copyWith(color: Colors.white),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
+                ],
+              ),
+            ),
+            
+            // "Not a member? Sign Up" fixé tout en bas de l'écran
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: creamColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      offset: const Offset(0, -2),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Not a member? ",
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => context.go('/register'),
+                      child: Text(
+                        'Sign Up',
+                        style: GoogleFonts.poppins(
+                          color: orangeColor,
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
-  }
-}
-
-enum CornerPosition {
-  topLeft,
-  topRight,
-  bottomLeft,
-  bottomRight,
-}
-
-class _CornerShape extends StatefulWidget {
-  final Color color;
-  final double size;
-  final CornerPosition cornerPosition;
-
-  const _CornerShape({
-    Key? key,
-    required this.color,
-    required this.size,
-    required this.cornerPosition,
-  }) : super(key: key);
-
-  @override
-  State<_CornerShape> createState() => _CornerShapeState();
-}
-
-class _CornerShapeState extends State<_CornerShape>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return SizedBox(
-          width: widget.size,
-          height: widget.size,
-          child: CustomPaint(
-            painter: _CornerShapePainter(
-              color: widget.color,
-              cornerPosition: widget.cornerPosition,
-              animationValue: _animation.value,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _CornerShapePainter extends CustomPainter {
-  final Color color;
-  final CornerPosition cornerPosition;
-  final double animationValue;
-
-  _CornerShapePainter({
-    required this.color,
-    required this.cornerPosition,
-    required this.animationValue,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-
-    // Facteur d'ondulation basé sur l'animation
-    final waveFactor = sin(animationValue * pi) * size.width * 0.05;
-
-    switch (cornerPosition) {
-      case CornerPosition.topLeft:
-        path.moveTo(0, 0);
-        path.lineTo(size.width, 0);
-        path.quadraticBezierTo(
-          size.width * 0.3 + waveFactor,
-          size.height * 0.3 + waveFactor,
-          0,
-          size.height,
-        );
-        path.close();
-        break;
-
-      case CornerPosition.topRight:
-        path.moveTo(size.width, 0);
-        path.lineTo(size.width, size.height);
-        path.quadraticBezierTo(
-          size.width * 0.7 - waveFactor,
-          size.height * 0.3 + waveFactor,
-          0,
-          0,
-        );
-        path.close();
-        break;
-
-      case CornerPosition.bottomLeft:
-        path.moveTo(0, size.height);
-        path.lineTo(size.width, size.height);
-        path.quadraticBezierTo(
-          size.width * 0.3 + waveFactor,
-          size.height * 0.7 - waveFactor,
-          0,
-          0,
-        );
-        path.close();
-        break;
-
-      case CornerPosition.bottomRight:
-        path.moveTo(size.width, size.height);
-        path.lineTo(0, size.height);
-        path.quadraticBezierTo(
-          size.width * 0.7 - waveFactor,
-          size.height * 0.7 - waveFactor,
-          size.width,
-          0,
-        );
-        path.close();
-        break;
-    }
-
-    // Créer un dégradé
-    final gradient = LinearGradient(
-      begin: _getGradientBegin(),
-      end: _getGradientEnd(),
-      colors: [
-        color,
-        color.withOpacity(0.8),
-      ],
-    );
-
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    paint.shader = gradient.createShader(rect);
-
-    canvas.drawPath(path, paint);
-
-    // Ajouter des points décoratifs animés
-    final dotPaint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
-      ..style = PaintingStyle.fill;
-
-    for (var i = 0; i < 5; i++) {
-      final xPos =
-          size.width * (0.3 + (i * 0.15)) + (sin(animationValue * pi + i) * 5);
-      final yPos =
-          size.height * (0.3 + (i * 0.15)) + (cos(animationValue * pi + i) * 5);
-
-      if (_isPointInShape(path, Offset(xPos, yPos))) {
-        canvas.drawCircle(
-          Offset(xPos, yPos),
-          3 + sin(animationValue * pi + i) * 1,
-          dotPaint,
-        );
-      }
-    }
-  }
-
-  Alignment _getGradientBegin() {
-    switch (cornerPosition) {
-      case CornerPosition.topLeft:
-        return Alignment.bottomRight;
-      case CornerPosition.topRight:
-        return Alignment.bottomLeft;
-      case CornerPosition.bottomLeft:
-        return Alignment.topRight;
-      case CornerPosition.bottomRight:
-        return Alignment.topLeft;
-    }
-  }
-
-  Alignment _getGradientEnd() {
-    switch (cornerPosition) {
-      case CornerPosition.topLeft:
-        return Alignment.topLeft;
-      case CornerPosition.topRight:
-        return Alignment.topRight;
-      case CornerPosition.bottomLeft:
-        return Alignment.bottomLeft;
-      case CornerPosition.bottomRight:
-        return Alignment.bottomRight;
-    }
-  }
-
-  bool _isPointInShape(Path path, Offset point) {
-    return path.contains(point);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CornerShapePainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue;
   }
 }

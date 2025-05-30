@@ -24,4 +24,7 @@ class ApiConstants {
   
   // Endpoints de groupes
   static const String groups = '/groups';
+
+  // Endpoint Google login
+  static const String googleLogin = '/auth/google-login';
 }

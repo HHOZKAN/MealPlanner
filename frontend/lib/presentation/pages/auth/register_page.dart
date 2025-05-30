@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:math' show pi, sin, cos;
+import 'package:google_fonts/google_fonts.dart';
 import '../../../presentation/providers/auth_provider.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
@@ -137,7 +137,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         keyboardType: keyboardType,
         validator: validator,
         style: TextStyle(
-          color: color, // <-- couleur du texte tapé
+          color: color,
         ),
         decoration: InputDecoration(
           labelText: label,
@@ -164,435 +164,242 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Définition de la palette de couleurs personnalisable
-    final backgroundColor =
-        const Color(0xFFF0F7FF); // Couleur de fond de la page
-    final primaryColor = const Color(
-        0xFFF15A29); // Couleur principale (utilisée pour les icônes et textes)
-    final accentColor =
-        const Color(0xFFF15A29); // Couleur d'accent (utilisée pour le dégradé)
-    final tertiaryColor =
-        const Color(0xFFFF6B6B); // Couleur pour les messages d'erreur
-    final quaternaryColor =
-        const Color(0xFFF15A29); // Couleur pour le bouton principal
-
-    final authState = ref.watch(authStateProvider);
+    // Utiliser les mêmes couleurs que la page Login
+    final creamColor = const Color(0xFFF9F4E9);
+    final orangeColor = const Color(0xFFF15A29);
+    final greyColor = const Color(0xFFBDBDBD);
+    final blackColor = Colors.black87;
+    
+    // Styles de texte avec Google Fonts (comme sur la page Login)
+    final titleStyle = GoogleFonts.poppins(
+      fontSize: 32,
+      fontWeight: FontWeight.bold,
+      color: blackColor,
+    );
+    
+    final subtitleStyle = GoogleFonts.poppins(
+      fontSize: 16,
+      color: orangeColor.withOpacity(0.6),
+      fontWeight: FontWeight.w400,
+    );
+    
+    final buttonTextStyle = GoogleFonts.poppins(
+      fontSize: 16,
+      color: orangeColor,
+      fontWeight: FontWeight.w600,
+    );
 
     return Scaffold(
-      // Couleur de fond de la page
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: primaryColor.withOpacity(0.1),
-        elevation: 0, // Pas d'ombre
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: primaryColor), // Couleur de l'icône de retour
-          onPressed: () => context.go('/login'),
+      backgroundColor: creamColor, // Fond simple comme la page de login
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(0),
+        child: AppBar(
+          backgroundColor: creamColor,
+          elevation: 0,
+          toolbarHeight: 0,
+          automaticallyImplyLeading: false,
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
+      body: SafeArea(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => context.go('/splash'), // Changé de '/login' à '/splash'
+                    padding: const EdgeInsets.all(0),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Sign Up', style: titleStyle),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Create your account to get started',
+                    style: subtitleStyle,
+                  ),
+                  const SizedBox(height: 40),
 
-          return Stack(
-            children: [
-              // Arrière-plan dégradé
-              Positioned(
-                top: 0,
-                right: 0,
-                child: _WavyShape(
-                  color:
-                      primaryColor.withOpacity(0.1), // Couleur de l'ondulation
-                  size: width * 1, // Taille de l'ondulation
-                ),
-              ),
-              // Forme de bulle en bas
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: _BubbleShape(
-                  color: accentColor.withOpacity(0.1), // Couleur de la bulle
-                  size: width * 0.6, // Taille de la bulle
-                ),
-              ),
-              SingleChildScrollView(
-                padding:
-                    const EdgeInsets.all(24.0), // Espacement autour du contenu
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        // Ajoutez ce widget
-                        child: ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: [primaryColor, accentColor],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ).createShader(bounds),
-                          child: const Text(
-                            'Rejoignez Meal Planner',
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
+                  if (_errorMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade100),
                       ),
-                      const SizedBox(height: 40),
-                      if (_errorMessage != null || authState == AuthState.error)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: tertiaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: tertiaryColor.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Text(
-                            _errorMessage ??
-                                ref
-                                    .read(authStateProvider.notifier)
-                                    .errorMessage ??
-                                'Une erreur est survenue',
-                            style: TextStyle(color: tertiaryColor),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                      _buildTextField(
-                        controller: _nameController,
-                        label: 'Nom complet',
-                        icon: Icons.person_outline,
-                        color: primaryColor,
-                        validator: _validateName,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _emailController,
-                        label: 'Email',
-                        icon: Icons.email_outlined,
-                        color: primaryColor,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: _validateEmail,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _phoneController,
-                        label: 'Téléphone (optionnel)',
-                        icon: Icons.phone_outlined,
-                        color: primaryColor,
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _passwordController,
-                        label: 'Mot de passe',
-                        icon: Icons.lock_outline,
-                        color: primaryColor,
-                        isPassword: true,
-                        obscureText: _obscurePassword,
-                        onToggleVisibility: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                        validator: _validatePassword,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '8 caractères minimum avec majuscules, minuscules, chiffres et symboles',
-                        style: TextStyle(
-                          color: primaryColor.withOpacity(0.6),
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: _confirmPasswordController,
-                        label: 'Confirmer le mot de passe',
-                        icon: Icons.lock_outline,
-                        color: primaryColor,
-                        isPassword: true,
-                        obscureText: _obscureConfirmPassword,
-                        onToggleVisibility: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
-                        validator: _validateConfirmPassword,
-                      ),
-                      const SizedBox(height: 32),
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: quaternaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color.fromARGB(255, 255, 255, 255)),
-                                ),
-                              )
-                            : const Text(
-                                'Créer mon compte',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white
-                                ),
-                              ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Row(
                         children: [
-                          Text(
-                            'Déjà membre ? ',
-                            style:
-                                TextStyle(color: primaryColor.withOpacity(0.8)),
-                          ),
-                          TextButton(
-                            onPressed: () => context.go('/login'),
+                          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
                             child: Text(
-                              'Se connecter',
-                              style: TextStyle(
-                                color: quaternaryColor,
-                                fontWeight: FontWeight.bold,
+                              _errorMessage!,
+                              style: GoogleFonts.poppins(
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ],
+                    ),
+
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        _buildTextField(
+                          controller: _nameController,
+                          label: 'Full Name',
+                          icon: Icons.person_outline,
+                          color: orangeColor,
+                          validator: _validateName,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _emailController,
+                          label: 'Email Address',
+                          icon: Icons.email_outlined,
+                          color: orangeColor,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: _validateEmail,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _phoneController,
+                          label: 'Phone (optional)',
+                          icon: Icons.phone_outlined,
+                          color: orangeColor,
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _passwordController,
+                          label: 'Password',
+                          icon: Icons.lock_outline,
+                          color: orangeColor,
+                          isPassword: true,
+                          obscureText: _obscurePassword,
+                          onToggleVisibility: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          validator: _validatePassword,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '8 characters minimum with uppercase, lowercase, numbers, and symbols',
+                          style: GoogleFonts.poppins(
+                            color: greyColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _confirmPasswordController,
+                          label: 'Confirm Password',
+                          icon: Icons.lock_outline,
+                          color: orangeColor,
+                          isPassword: true,
+                          obscureText: _obscureConfirmPassword,
+                          onToggleVisibility: () {
+                            setState(() {
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                            });
+                          },
+                          validator: _validateConfirmPassword,
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _register,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: orangeColor,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : Text(
+                                    'Create Account',
+                                    style: buttonTextStyle.copyWith(color: Colors.white),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 100), // Espace pour le texte en bas
+                      ],
+                    ),
                   ),
+                ],
+              ),
+            ),
+            
+            // "Already a member? Login" fixé tout en bas de l'écran
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: creamColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      offset: const Offset(0, -2),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Already a member? ",
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => context.go('/login'),
+                      child: Text(
+                        'Login',
+                        style: GoogleFonts.poppins(
+                          color: orangeColor,
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _WavyShape extends StatefulWidget {
-  final Color color;
-  final double size;
-
-  const _WavyShape({
-    required this.color,
-    required this.size,
-  });
-
-  @override
-  State<_WavyShape> createState() => _WavyShapeState();
-}
-
-class _WavyShapeState extends State<_WavyShape>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 4),
-      vsync: this,
-    )..repeat();
-
-    _animation = Tween<double>(begin: 0.0, end: 2 * pi).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return CustomPaint(
-          size: Size(widget.size, widget.size),
-          painter: _WavyShapePainter(
-            color: widget.color,
-            animationValue: _animation.value,
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _WavyShapePainter extends CustomPainter {
-  final Color color;
-  final double animationValue;
-
-  _WavyShapePainter({
-    required this.color,
-    required this.animationValue,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(size.width, 0);
-    path.lineTo(size.width, size.height * 0.8);
-
-    for (var i = 0; i <= 5; i++) {
-      final x = size.width - (size.width * (i / 5));
-      final waveHeight = sin(animationValue + i) * 10;
-      path.lineTo(x, size.height * 0.6 + waveHeight);
-    }
-
-    path.lineTo(0, size.height * 0.4);
-    path.lineTo(0, 0);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _WavyShapePainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue;
-  }
-}
-
-class _BubbleShape extends StatefulWidget {
-  final Color color;
-  final double size;
-
-  const _BubbleShape({
-    required this.color,
-    required this.size,
-  });
-
-  @override
-  State<_BubbleShape> createState() => _BubbleShapeState();
-}
-
-class _BubbleShapeState extends State<_BubbleShape>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return CustomPaint(
-          size: Size(widget.size, widget.size),
-          painter: _BubbleShapePainter(
-            color: widget.color,
-            animationValue: _animation.value,
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _BubbleShapePainter extends CustomPainter {
-  final Color color;
-  final double animationValue;
-
-  _BubbleShapePainter({
-    required this.color,
-    required this.animationValue,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-
-    // Dessiner la forme principale
-    path.moveTo(0, size.height);
-    path.lineTo(size.width, size.height);
-
-    // Créer une courbe ondulée avec des bulles
-    final curveHeight = size.height * 0.6;
-    path.quadraticBezierTo(
-      size.width * 0.7,
-      curveHeight + (sin(animationValue * pi) * 20),
-      size.width * 0.3,
-      curveHeight - (cos(animationValue * pi) * 20),
-    );
-
-    path.close();
-    canvas.drawPath(path, paint);
-
-    // Ajouter des bulles décoratives
-    final bubblePaint = Paint()
-      ..color = color.withOpacity(0.5)
-      ..style = PaintingStyle.fill;
-
-    // Dessiner plusieurs bulles avec animation
-    for (var i = 0; i < 5; i++) {
-      final xOffset = size.width * (0.2 + (i * 0.15));
-      final yOffset = size.height * (0.3 + (i * 0.1));
-      final radius = 10 + (sin(animationValue * pi + i) * 5);
-
-      canvas.drawCircle(
-        Offset(
-          xOffset + (cos(animationValue * pi + i) * 10),
-          yOffset + (sin(animationValue * pi + i) * 10),
+            ),
+          ],
         ),
-        radius,
-        bubblePaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BubbleShapePainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue;
+      ),
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../presentation/pages/auth/login_page.dart';
+import '../../presentation/pages/splash/splash_page.dart';
 import '../../presentation/pages/auth/register_page.dart';
 import '../../presentation/pages/dashboard/dashboard_page.dart';
 import '../../presentation/pages/events/event_list_page.dart';
@@ -19,41 +20,53 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
   
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     redirect: (BuildContext context, GoRouterState state) {
       final path = state.uri.path;
       print('GoRouter redirect - authState: $authState, path: $path');
       
-      // Si l'état d'authentification est en cours de chargement, rediriger vers l'écran de chargement
-      if (authState == AuthState.loading || authState == AuthState.initial) {
+      // Only show loading screen during initial load
+      if (authState == AuthState.initial) {
         return '/loading';
       }
-      
-      // Si l'utilisateur n'est pas authentifié et qu'il essaie d'accéder à une page protégée
-      if (authState == AuthState.unauthenticated && 
-          !path.startsWith('/login') && 
-          !path.startsWith('/register') &&
-          !path.startsWith('/loading')) {
-        print('Redirection vers /login');
+
+      // Handle authenticated state
+      if (authState == AuthState.authenticated) {
+        // Always redirect to dashboard if authenticated, except for protected routes
+        if (path.startsWith('/login') || 
+            path.startsWith('/register') || 
+            path.startsWith('/splash') ||
+            path == '/') {
+          return '/';
+        }
+        // Allow access to other protected routes (events, profile, etc.)
+        return null;
+      }
+
+      // Handle unauthenticated state
+      if (authState == AuthState.unauthenticated) {
+        // Allow access to public routes
+        if (path.startsWith('/login') || 
+            path.startsWith('/register')) {
+          return null;
+        }
         
-        // Si une erreur d'authentification s'est produite, ajouter un paramètre d'erreur
+        // Add error message if exists
         if (authStateNotifier.errorMessage != null) {
           return '/login?error=${Uri.encodeComponent(authStateNotifier.errorMessage!)}';
         }
         
-        return '/login';
-      }
-      
-      // Si l'utilisateur est authentifié et qu'il essaie d'accéder à la page de connexion ou d'inscription
-      if (authState == AuthState.authenticated && 
-          (path.startsWith('/login') || path.startsWith('/register'))) {
-        print('Redirection vers /');
-        return '/';
+        return '/login'; // Redirect to login for protected routes
       }
       
       return null;
     },
     routes: [
+      // Splash screen
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashPage(),
+      ),
       // Écran de chargement
       GoRoute(
         path: '/loading',

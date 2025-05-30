@@ -51,58 +51,58 @@ class AuthRepository {
     }
   }
   
-Future<UserModel> login({
-  required String email,
-  required String password,
-}) async {
-  print('Tentative de connexion avec email: $email');
-  try {
-    final response = await _dioClient.post(
-      ApiConstants.login,
-      data: {
-        'email': email,
-        'password': password,
-      },
-    );
-    
-    print('Réponse reçue: ${response.data}');
-    
-    final data = response.data;
-    
-    if (data['status'] == 'success') {
-      try {
-        final token = data['data']['token'];
-        final user = UserModel.fromJson(data['data']['user']);
-        
-        print('Connexion réussie, token: $token');
-        print('Utilisateur: ${user.toString()}');
-        
-        // Sauvegarder le token
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-        
-        return user;
-      } catch (e) {
-        print('Erreur lors de la désérialisation des données: $e');
-        throw Exception('Erreur lors de la connexion: format de données incorrect');
+  Future<UserModel> login({
+    required String email,
+    required String password,
+  }) async {
+    print('Tentative de connexion avec email: $email');
+    try {
+      final response = await _dioClient.post(
+        ApiConstants.login,
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+      
+      print('Réponse reçue: ${response.data}');
+      
+      final data = response.data;
+      
+      if (data['status'] == 'success') {
+        try {
+          final token = data['data']['token'];
+          final user = UserModel.fromJson(data['data']['user']);
+          
+          print('Connexion réussie, token: $token');
+          print('Utilisateur: ${user.toString()}');
+          
+          // Sauvegarder le token
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('auth_token', token);
+          
+          return user;
+        } catch (e) {
+          print('Erreur lors de la désérialisation des données: $e');
+          throw Exception('Erreur lors de la connexion: format de données incorrect');
+        }
+      } else {
+        print('Erreur dans la réponse: ${data['message']}');
+        throw Exception(data['message'] ?? 'Erreur lors de la connexion');
       }
-    } else {
-      print('Erreur dans la réponse: ${data['message']}');
-      throw Exception(data['message'] ?? 'Erreur lors de la connexion');
-    }
-  } catch (e) {
-    print('Exception lors de la connexion: $e');
-    if (e is DioException) {
-      print('DioException: ${e.response?.data}');
-      final data = e.response?.data;
-      if (e.response?.statusCode == 401) {
-        throw Exception('Identifiants incorrects');
+    } catch (e) {
+      print('Exception lors de la connexion: $e');
+      if (e is DioException) {
+        print('DioException: ${e.response?.data}');
+        final data = e.response?.data;
+        if (e.response?.statusCode == 401) {
+          throw Exception('Identifiants incorrects');
+        }
+        throw Exception(data?['message'] ?? 'Erreur lors de la connexion');
       }
-      throw Exception(data?['message'] ?? 'Erreur lors de la connexion');
+      throw Exception('Erreur lors de la connexion: ${e.toString()}');
     }
-    throw Exception('Erreur lors de la connexion: ${e.toString()}');
   }
-}
   
   Future<void> logout() async {
     try {

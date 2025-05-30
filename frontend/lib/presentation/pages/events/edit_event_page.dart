@@ -26,16 +26,17 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
   late TimeOfDay _selectedTime;
   late String _selectedType;
   late String _selectedStatus;
+  late String _selectedEmoji;
   
   bool _isLoading = false;
   String? _errorMessage;
   
   final List<Map<String, dynamic>> _eventTypes = [
-    {'value': 'dinner', 'label': 'Dîner', 'icon': Icons.dinner_dining, 'color': Colors.deepOrange},
-    {'value': 'lunch', 'label': 'Déjeuner', 'icon': Icons.lunch_dining, 'color': Colors.amber},
-    {'value': 'brunch', 'label': 'Brunch', 'icon': Icons.brunch_dining, 'color': Colors.lightGreen},
-    {'value': 'breakfast', 'label': 'Petit-déjeuner', 'icon': Icons.free_breakfast, 'color': Colors.brown},
-    {'value': 'other', 'label': 'Autre', 'icon': Icons.restaurant, 'color': Colors.purple},
+    {'value': 'dinner', 'label': 'Dîner', 'icon': Icons.dinner_dining, 'color': const Color(0xFFFF5722)},
+    {'value': 'lunch', 'label': 'Déjeuner', 'icon': Icons.lunch_dining, 'color': const Color(0xFFFF5722)},
+    {'value': 'brunch', 'label': 'Brunch', 'icon': Icons.brunch_dining, 'color': const Color(0xFFFF5722)},
+    {'value': 'breakfast', 'label': 'Petit-déjeuner', 'icon': Icons.free_breakfast, 'color': const Color(0xFFFF5722)},
+    {'value': 'other', 'label': 'Autre', 'icon': Icons.restaurant, 'color': const Color(0xFFFF5722)},
   ];
   
   final List<Map<String, dynamic>> _eventStatuses = [
@@ -45,6 +46,9 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
     {'value': 'cancelled', 'label': 'Annulé', 'color': Colors.red},
     {'value': 'completed', 'label': 'Terminé', 'color': Colors.teal},
   ];
+
+  // Pour le dropdown des types d'événement
+  String? _dropdownSelectedType;
 
   @override
   void initState() {
@@ -60,6 +64,8 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
     );
     _selectedType = widget.event.type;
     _selectedStatus = widget.event.status;
+    _selectedEmoji = widget.event.emoji ?? '🍽️';
+    _dropdownSelectedType = _selectedType;
   }
 
   @override
@@ -129,6 +135,7 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
           location: _locationController.text.trim(),
           type: _selectedType,
           status: _selectedStatus,
+          // Retirer 'emoji: _selectedEmoji,' s'il n'est pas supporté
         );
         
         if (mounted) {
@@ -151,20 +158,148 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
     }
   }
 
+  void _showEmojiPicker() {
+    final List<String> _commonEmojis = ['🍽️', '🍖', '🥘', '🥗', '🍝', '🍕', '🌮', '🥪', '🍱', '🍲'];
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Choisir un emoji',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 20,
+              runSpacing: 20,
+              children: _commonEmojis.map((emoji) => GestureDetector(
+                onTap: () {
+                  setState(() => _selectedEmoji = emoji);
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(
+                        fontSize: 40,
+                        color: Color(0xFFFF5722),
+                      ),
+                    ),
+                  ),
+                ),
+              )).toList(),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final dateFormat = DateFormat('dd MMMM yyyy', 'fr_FR');
     
     return Scaffold(
+      // Même couleur de fond que le dashboard et la page create
+      backgroundColor: const Color(0xFFF9F5F0),
       appBar: AppBar(
-        title: const Text('Modifier l\'événement'),
+        backgroundColor: const Color(0xFFF9F5F0),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFFF5722)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Modifier l\'événement',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Emoji Selector
+            Center(
+              child: GestureDetector(
+                onTap: _showEmojiPicker,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 0.5,
+                      ),
+                    ],
+                    border: Border.all(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _selectedEmoji,
+                      style: const TextStyle(
+                        fontSize: 48,
+                        color: Color(0xFFFF5722),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
             // Message d'erreur
             if (_errorMessage != null)
               Container(
@@ -180,115 +315,236 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
                   style: TextStyle(color: Colors.red.shade800),
                 ),
               ),
-            
-            // Titre
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Titre de l\'événement',
-                prefixIcon: Icon(Icons.title),
+
+            // Titre - avec ombre plus prononcée pour mieux ressortir
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
+                  ),
+                ],
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Veuillez entrer un titre';
-                }
-                return null;
-              },
+              child: TextFormField(
+                controller: _titleController,
+                style: const TextStyle(color: Color(0xFF2D3142)),
+                decoration: InputDecoration(
+                  labelText: 'Titre de l\'événement',
+                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                  hintText: 'Ex: Dîner chez Marie',
+                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                  prefixIcon: const Icon(Icons.title, color: Color(0xFFFF5722)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez entrer un titre';
+                  }
+                  return null;
+                },
+              ),
             ),
             const SizedBox(height: 16),
             
-            // Description
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description (optionnelle)',
-                prefixIcon: Icon(Icons.description),
+            // Description - avec ombre plus prononcée
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
+                  ),
+                ],
               ),
-              maxLines: 3,
+              child: TextFormField(
+                controller: _descriptionController,
+                style: const TextStyle(color: Color(0xFF2D3142)),
+                decoration: InputDecoration(
+                  labelText: 'Description (optionnelle)',
+                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                  hintText: 'Ex: Apportez votre spécialité !',
+                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                  prefixIcon: const Icon(Icons.description, color: Color(0xFFFF5722)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
+                ),
+                maxLines: 3,
+              ),
             ),
             const SizedBox(height: 24),
             
-            // Type d'événement
+            // Type d'événement - texte en noir (non blanc)
             Text(
               'Type d\'événement',
-              style: theme.textTheme.titleMedium,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2D3142),
+              ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _eventTypes.map((type) {
-                final isSelected = _selectedType == type['value'];
-                final color = type['color'] as Color;
-                return ChoiceChip(
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        type['icon'] as IconData,
-                        size: 18,
-                        color: isSelected ? Colors.white : color,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(type['label'] as String),
-                    ],
+            // Dropdown avec ombre
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
                   ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedType = type['value'] as String;
-                      });
-                    }
-                  },
-                  backgroundColor: Colors.transparent,
-                  selectedColor: color,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
+                ],
+              ),
+              child: DropdownButtonFormField<String>(
+                value: _dropdownSelectedType,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
-                  elevation: isSelected ? 3 : 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                );
-              }).toList(),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
+                ),
+                dropdownColor: Colors.white, // Fond blanc pour le dropdown
+                items: _eventTypes.map((type) {
+                  return DropdownMenuItem<String>(
+                    value: type['value'] as String,
+                    child: Row(
+                      children: [
+                        Icon(type['icon'] as IconData, color: const Color(0xFFFF5722)),
+                        const SizedBox(width: 8),
+                        Text(type['label'] as String, style: const TextStyle(color: Color(0xFF2D3142))),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _dropdownSelectedType = value;
+                    _selectedType = value ?? 'dinner';
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 24),
             
-            // Statut de l'événement
+            // Statut de l'événement - avec le même style
             Text(
               'Statut',
-              style: theme.textTheme.titleMedium,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2D3142),
+              ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _eventStatuses.map((status) {
-                final isSelected = _selectedStatus == status['value'];
-                final color = status['color'] as Color;
-                return ChoiceChip(
-                  label: Text(status['label'] as String),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedStatus = status['value'] as String;
-                      });
-                    }
-                  },
-                  backgroundColor: color.withOpacity(0.1),
-                  selectedColor: color,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : color,
+            // ChoiceChips en style Card
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
                   ),
-                );
-              }).toList(),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _eventStatuses.map((status) {
+                  final isSelected = _selectedStatus == status['value'];
+                  final color = status['color'] as Color;
+                  return ChoiceChip(
+                    label: Text(status['label'] as String),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedStatus = status['value'] as String;
+                        });
+                      }
+                    },
+                    backgroundColor: Colors.white,
+                    selectedColor: color,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    elevation: isSelected ? 2 : 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(
+                        color: isSelected ? Colors.transparent : color.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
             const SizedBox(height: 24),
             
             // Date et heure
             Text(
               'Date et heure',
-              style: theme.textTheme.titleMedium,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2D3142),
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -296,12 +552,42 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectDate(context),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.calendar_today),
-                        border: OutlineInputBorder(),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                            spreadRadius: 0.5,
+                          ),
+                        ],
                       ),
-                      child: Text(dateFormat.format(_selectedDate)),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFFFF5722)),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        child: Text(
+                          dateFormat.format(_selectedDate),
+                          style: const TextStyle(
+                            color: Color(0xFF2D3142),
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -309,12 +595,42 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectTime(context),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.access_time),
-                        border: OutlineInputBorder(),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                            spreadRadius: 0.5,
+                          ),
+                        ],
                       ),
-                      child: Text(_selectedTime.format(context)),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.access_time, color: Color(0xFFFF5722)),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        child: Text(
+                          _selectedTime.format(context),
+                          style: const TextStyle(
+                            color: Color(0xFF2D3142),
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -323,11 +639,44 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
             const SizedBox(height: 16),
             
             // Lieu
-            TextFormField(
-              controller: _locationController,
-              decoration: const InputDecoration(
-                labelText: 'Lieu (optionnel)',
-                prefixIcon: Icon(Icons.location_on),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _locationController,
+                style: const TextStyle(color: Color(0xFF2D3142)),
+                decoration: InputDecoration(
+                  labelText: 'Lieu (optionnel)',
+                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                  hintText: 'Ex: 12 rue des Lilas, Paris',
+                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF5722)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -338,9 +687,32 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _updateEvent,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF5722),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 2,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
                 child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Mettre à jour l\'événement'),
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Mettre à jour l\'événement',
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],

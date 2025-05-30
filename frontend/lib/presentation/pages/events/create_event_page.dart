@@ -211,17 +211,24 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     final dateFormat = DateFormat('dd MMMM yyyy', 'fr_FR');
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      // Même couleur de fond que le dashboard
+      backgroundColor: const Color(0xFFF9F5F0),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        // Même couleur que le fond principal
+        backgroundColor: const Color(0xFFF9F5F0),
         elevation: 0,
-        leading: Container(
-          color: Colors.white,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFFF5722)),
-            onPressed: () => Navigator.pop(context),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFFF5722)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Créer un événement',
+          style: TextStyle(
+            color: Color(0xFF2D3142),
+            fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
       ),
       body: Form(
         key: _formKey,
@@ -240,9 +247,10 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
+                        spreadRadius: 0.5,
                       ),
                     ],
                     border: Border.all(
@@ -280,118 +288,162 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 ),
               ),
 
-            // Titre
-            TextFormField(
-              controller: _titleController,
-              style: const TextStyle(color: Color(0xFF2D3142)),
-              decoration: InputDecoration(
-                labelText: 'Titre de l\'événement',
-                labelStyle: const TextStyle(color: Color(0xFF2D3142)),
-                hintText: 'Ex: Dîner chez Marie',
-                hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
-                prefixIcon: const Icon(Icons.title, color: Color(0xFFFF5722)),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
-                ),
+            // Titre - avec ombre plus prononcée pour mieux ressortir
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
+                  ),
+                ],
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Veuillez entrer un titre';
-                }
-                return null;
-              },
+              child: TextFormField(
+                controller: _titleController,
+                style: const TextStyle(color: Color(0xFF2D3142)),
+                decoration: InputDecoration(
+                  labelText: 'Titre de l\'événement',
+                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                  hintText: 'Ex: Dîner chez Marie',
+                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                  prefixIcon: const Icon(Icons.title, color: Color(0xFFFF5722)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez entrer un titre';
+                  }
+                  return null;
+                },
+              ),
             ),
             const SizedBox(height: 16),
             
-            // Description
-            TextFormField(
-              controller: _descriptionController,
-              style: const TextStyle(color: Color(0xFF2D3142)),
-              decoration: InputDecoration(
-                labelText: 'Description (optionnelle)',
-                labelStyle: const TextStyle(color: Color(0xFF2D3142)),
-                hintText: 'Ex: Apportez votre spécialité !',
-                hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
-                prefixIcon: const Icon(Icons.description, color: Color(0xFFFF5722)),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
-                ),
+            // Description - avec ombre plus prononcée
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
+                  ),
+                ],
               ),
-              maxLines: 3,
+              child: TextFormField(
+                controller: _descriptionController,
+                style: const TextStyle(color: Color(0xFF2D3142)),
+                decoration: InputDecoration(
+                  labelText: 'Description (optionnelle)',
+                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                  hintText: 'Ex: Apportez votre spécialité !',
+                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                  prefixIcon: const Icon(Icons.description, color: Color(0xFFFF5722)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
+                ),
+                maxLines: 3,
+              ),
             ),
             const SizedBox(height: 24),
             
-            // Type d'événement
+            // Type d'événement - texte en noir (non blanc)
             Text(
               'Type d\'événement',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF2D3142),
+                color: Color(0xFF2D3142), // Changé de blanc à noir
               ),
             ),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _dropdownSelectedType,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
-                ),
-              ),
-              items: _eventTypes.map((type) {
-                return DropdownMenuItem<String>(
-                  value: type['value'] as String,
-                  child: Row(
-                    children: [
-                      Icon(type['icon'] as IconData, color: const Color(0xFFFF5722)),
-                      const SizedBox(width: 8),
-                      Text(type['label'] as String, style: const TextStyle(color: Color(0xFF2D3142))),
-                    ],
+            // Dropdown avec ombre
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
                   ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _dropdownSelectedType = value;
-                  _selectedType = value ?? 'dinner';
-                });
-              },
+                ],
+              ),
+              child: DropdownButtonFormField<String>(
+                value: _dropdownSelectedType,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
+                ),
+                dropdownColor: Colors.white, // Fond blanc pour le dropdown
+                items: _eventTypes.map((type) {
+                  return DropdownMenuItem<String>(
+                    value: type['value'] as String,
+                    child: Row(
+                      children: [
+                        Icon(type['icon'] as IconData, color: const Color(0xFFFF5722)),
+                        const SizedBox(width: 8),
+                        Text(type['label'] as String, style: const TextStyle(color: Color(0xFF2D3142))),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _dropdownSelectedType = value;
+                    _selectedType = value ?? 'dinner';
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 24),
             
@@ -410,26 +462,40 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectDate(context),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFFFF5722)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                        ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                            spreadRadius: 0.5,
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        dateFormat.format(_selectedDate),
-                        style: const TextStyle(
-                          color: Color(0xFF2D3142),
-                          fontSize: 15,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFFFF5722)),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        child: Text(
+                          dateFormat.format(_selectedDate),
+                          style: const TextStyle(
+                            color: Color(0xFF2D3142),
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
@@ -439,26 +505,40 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectTime(context),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.access_time, color: Color(0xFFFF5722)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                        ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                            spreadRadius: 0.5,
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        _selectedTime.format(context),
-                        style: const TextStyle(
-                          color: Color(0xFF2D3142),
-                          fontSize: 15,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.access_time, color: Color(0xFFFF5722)),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        child: Text(
+                          _selectedTime.format(context),
+                          style: const TextStyle(
+                            color: Color(0xFF2D3142),
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
@@ -469,29 +549,43 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             const SizedBox(height: 16),
             
             // Lieu
-            TextFormField(
-              controller: _locationController,
-              style: const TextStyle(color: Color(0xFF2D3142)),
-              decoration: InputDecoration(
-                labelText: 'Lieu (optionnel)',
-                labelStyle: const TextStyle(color: Color(0xFF2D3142)),
-                hintText: 'Ex: 12 rue des Lilas, Paris',
-                hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
-                prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF5722)),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0.5,
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _locationController,
+                style: const TextStyle(color: Color(0xFF2D3142)),
+                decoration: InputDecoration(
+                  labelText: 'Lieu (optionnel)',
+                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                  hintText: 'Ex: 12 rue des Lilas, Paris',
+                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
+                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF5722)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
+                  ),
                 ),
               ),
             ),
@@ -504,11 +598,11 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _createEvent,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF5722), // <-- couleur du bouton
+                  backgroundColor: const Color(0xFFFF5722),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  elevation: 0,
+                  elevation: 2,
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,

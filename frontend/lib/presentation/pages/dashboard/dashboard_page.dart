@@ -326,9 +326,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Listen to navigation changes if needed
+  void initState() {
+    super.initState();
+    // Load events when the dashboard is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(eventsStateProvider.notifier).loadEvents();
+    });
   }
 
   IconData _getIconForType(String type) {

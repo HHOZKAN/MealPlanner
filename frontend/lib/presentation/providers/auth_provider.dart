@@ -100,6 +100,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
       );
+      _errorMessage = null; // Clear any previous error
       state = AuthState.authenticated;
     } catch (e) {
       print('Erreur lors de la connexion: $e');

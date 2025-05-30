@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  // Colors
+  static const Color primaryGreen = Color(0xFF4CAF50);
+  static const Color primaryOrange = Color(0xFFFF9800);
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF4CAF50),
+        seedColor: primaryGreen,
         brightness: Brightness.light,
       ),
       appBarTheme: const AppBarTheme(
@@ -40,7 +43,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF4CAF50),
+        seedColor: primaryGreen,
         brightness: Brightness.dark,
       ),
       appBarTheme: const AppBarTheme(
