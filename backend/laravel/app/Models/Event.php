@@ -64,6 +64,11 @@ class Event extends Model
         return $this->hasMany(PendingInvitation::class);
     }
 
+    public function pendingParticipants()
+    {
+        return $this->hasMany(PendingParticipant::class);
+    }
+
     public function expenses()
     {
         return $this->hasMany(Expense::class);

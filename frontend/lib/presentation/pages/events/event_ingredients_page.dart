@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../data/models/ingredient_model.dart';
 import '../../../presentation/providers/ingredient_provider.dart';
 import '../../../presentation/providers/auth_provider.dart';
-import '../../widgets/loading_indicator.dart';
-import '../../widgets/error_message.dart';
 
 class EventIngredientsPage extends ConsumerStatefulWidget {
   final int eventId;
-  
+
   const EventIngredientsPage({
     Key? key,
     required this.eventId,
@@ -20,169 +17,240 @@ class EventIngredientsPage extends ConsumerStatefulWidget {
 }
 
 class _EventIngredientsPageState extends ConsumerState<EventIngredientsPage> {
-  bool _mounted = true;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() async {
-      if (!mounted) return;
-      print('Loading ingredients for event ${widget.eventId}');
-      try {
-        await ref.read(ingredientsStateProvider(widget.eventId).notifier).loadIngredients();
-        if (!mounted) return;
-        print('Ingredients loaded successfully');
-      } catch (e) {
-        if (!mounted) return;
-        print('Error loading ingredients: $e');
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _mounted = false;
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    print('Building EventIngredientsPage');
-    final notifier = ref.watch(ingredientsStateProvider(widget.eventId).notifier);
     final ingredientsState = ref.watch(ingredientsStateProvider(widget.eventId));
-    
-    final List<IngredientModel> ingredients = ingredientsState == IngredientsState.loaded 
-        ? notifier.ingredients 
-        : <IngredientModel>[];
-    
-    print('Current state: $ingredientsState');
-    print('Ingredients count: ${ingredients.length}');
-    
-    return ingredientsState == IngredientsState.loading
-        ? const LoadingIndicator()
-        : ingredientsState == IngredientsState.error
-            ? ErrorMessage(
-                message: ref.read(ingredientsStateProvider(widget.eventId).notifier).errorMessage ?? 
-                         'Erreur lors du chargement des ingrédients',
-                onRetry: () => ref.refresh(ingredientsStateProvider(widget.eventId)),
-              )
-            : RefreshIndicator(
-                onRefresh: () async {
-                  await ref.read(ingredientsStateProvider(widget.eventId).notifier).loadIngredients();
-                },
-                child: _buildIngredientsList(ingredients),
-              );
-  }
+    final notifier = ref.watch(ingredientsStateProvider(widget.eventId).notifier);
+    final currentUser = ref.watch(currentUserProvider);
 
-  Widget _buildIngredientsList(List<IngredientModel> ingredients) {
-    if (ingredients.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long, size: 36, color: Colors.grey),
-            SizedBox(height: 8),
-            Text(
-              'Aucun ingrédient',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      itemCount: ingredients.length,
-      itemBuilder: (context, index) {
-        final ingredient = ingredients[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Center(
-                      child: Text(
-                        ingredient.emoji ?? '💶',
-                        style: const TextStyle(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Builder(
+        builder: (context) {
+          switch (ingredientsState) {
+            case IngredientsState.loading:
+              return const Center(child: CircularProgressIndicator());
+            
+            case IngredientsState.loaded:
+              final ingredients = notifier.ingredients;
+              if (ingredients.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_basket_outlined,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Aucun ingrédient',
+                        style: TextStyle(
                           fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Ajoutez des ingrédients en utilisant le bouton +',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              
+              return ListView.builder(
+                itemCount: ingredients.length,
+                itemBuilder: (context, index) {
+                  final ingredient = ingredients[index];
+                  final isMyAssignment = ingredient.assignments?.any((a) => 
+                    a.userId == currentUser?.id && a.status == 'assigned') ?? false;
+                  final isPurchased = ingredient.status == 'purchased';
+                  
+                  // Style inspiré du dashboard EventCard
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      color: Colors.white, // Fond blanc explicite pour la carte
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white, // Fond blanc pour le container
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isMyAssignment 
+                                ? const Color(0xFFFF5722).withOpacity(0.3)
+                                : Colors.transparent,
+                            width: isMyAssignment ? 1.5 : 0,
+                          ),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            // Action au tap de l'ingrédient
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                // Icône à gauche
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: isPurchased 
+                                        ? Colors.green.withOpacity(0.1)
+                                        : const Color(0xFFFF5722).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      isPurchased ? Icons.check_circle : Icons.shopping_cart_outlined,
+                                      color: isPurchased ? Colors.green : const Color(0xFFFF5722),
+                                      size: 24,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                // Texte et détails
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        ingredient.name,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF2D3142), // Changé en couleur foncée pour être visible sur fond blanc
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        ingredient.quantity != null
+                                            ? '${ingredient.quantity} ${ingredient.unit ?? ''}'
+                                            : 'Quantité non spécifiée',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      if (isMyAssignment && !isPurchased)
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, 
+                                            vertical: 2
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFF5722).withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text(
+                                            'À acheter',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFFFF5722),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                // Prix à droite
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      ingredient.actualPrice != null
+                                          ? NumberFormat.currency(
+                                              locale: 'fr_FR', 
+                                              symbol: '€'
+                                            ).format(ingredient.actualPrice)
+                                          : ingredient.estimatedPrice != null
+                                              ? '~${NumberFormat.currency(
+                                                  locale: 'fr_FR', 
+                                                  symbol: '€'
+                                                ).format(ingredient.estimatedPrice)}'
+                                              : '—',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: isPurchased 
+                                            ? Colors.green 
+                                            : const Color(0xFF2D3142),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    if (ingredient.assignments != null && ingredient.assignments!.isNotEmpty)
+                                      Text(
+                                        'Assigné', // Texte simplifié pour éviter l'erreur
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                            Text(
-                              ingredient.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Payé par ${ingredient.assignments?.firstWhere(
-                                (a) => a.status == 'purchased',
-                                orElse: () => IngredientAssignmentModel(
-                                  id: -1,
-                                  ingredientId: ingredient.id,
-                                  userId: -1,
-                                  quantity: 0,
-                                  status: '',
-                                ),
-                              ).user?.name ?? 'Non assigné'}',
-                              style: const TextStyle(
-                                color: Color(0xFF666666),
-                                fontSize: 12,
-                              ),
-                            ),
-                      ],
+                  );
+                },
+              );
+            
+            case IngredientsState.error:
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red[300],
                     ),
-                  ),
-                  Text(
-                    ingredient.actualPrice != null
-                        ? NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(ingredient.actualPrice)
-                        : '-',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: ingredient.actualPrice != null ? Colors.black : const Color(0xFF666666),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Erreur: ${notifier.errorMessage}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.red,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => notifier.loadIngredients(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF5722),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
+              );
+            
+            default:
+              return const Center(child: Text('État inconnu'));
+          }
+        },
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 class ApiConstants {
   // URL de base de l'API
-  static const String baseUrl = 'http://localhost:8001/api';
+  static const String baseUrl = 'http://127.0.0.1:8001/api';
   
   // Endpoints d'authentification
   static const String register = '/auth/register';

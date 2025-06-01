@@ -45,9 +45,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Handle unauthenticated state
       if (authState == AuthState.unauthenticated) {
-        // Allow access to public routes
+        // Allow access to public routes (splash, login, register)
         if (path.startsWith('/login') || 
-            path.startsWith('/register')) {
+            path.startsWith('/register') ||
+            path.startsWith('/splash')) {
           return null;
         }
         

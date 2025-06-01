@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../presentation/providers/event_provider.dart';
+import '../../widgets/participant_selector.dart';
 
 class CreateEventPage extends ConsumerStatefulWidget {
   const CreateEventPage({Key? key}) : super(key: key);
@@ -22,6 +23,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   String _selectedEmoji = '🍽️';
   bool _isLoading = false;
   String? _errorMessage;
+  final List<String> _selectedNicknames = [];
 
   final List<Map<String, dynamic>> _eventTypes = [
     {'value': 'dinner', 'label': 'Dîner', 'icon': Icons.dinner_dining, 'color': const Color(0xFFFF5722)},
@@ -176,7 +178,9 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
       });
 
       try {
-        await ref.read(eventsStateProvider.notifier).createEvent(
+        print('Creating event with nicknames: $_selectedNicknames');
+        
+        final event = await ref.read(eventsStateProvider.notifier).createEvent(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           date: _getDateTime(),
@@ -184,6 +188,23 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
           type: _selectedType,
           emoji: _selectedEmoji,
         );
+        
+        print('Event created with ID: ${event.id}');
+        
+        // Créer les invitations pour les participants
+        if (_selectedNicknames.isNotEmpty) {
+          print('Creating invitations for ${_selectedNicknames.length} participants');
+          for (final nickname in _selectedNicknames) {
+            print('Creating invitation for participant: $nickname');
+            await ref.read(eventRepositoryProvider).createInvitation(
+              eventId: event.id,
+              nickname: nickname,
+            );
+          }
+          print('All invitations created successfully');
+        } else {
+          print('No participants to invite');
+        }
         
         if (mounted) {
           Navigator.pop(context, true);
@@ -589,6 +610,20 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            
+            // Sélecteur de participants
+            ParticipantSelector(
+              selectedNicknames: _selectedNicknames,
+              onParticipantsChanged: (nicknames) {
+                setState(() {
+                  _selectedNicknames.clear();
+                  _selectedNicknames.addAll(nicknames);
+                });
+              },
+              subtitle: 'Ajoutez des participants à votre événement',
+            ),
+            
             const SizedBox(height: 32),
             
             // Bouton de création

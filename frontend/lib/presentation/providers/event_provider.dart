@@ -39,7 +39,7 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
     }
   }
   
-  Future<void> createEvent({
+  Future<EventModel> createEvent({
     required String title,
     String? description,
     required DateTime date,
@@ -55,12 +55,15 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
         date: date,
         location: location,
         type: type,
+        emoji: emoji,
       );
       _events = [event, ..._events];
       state = EventsState.loaded;
+      return event;
     } catch (e) {
       _errorMessage = e.toString();
       state = EventsState.error;
+      rethrow;
     }
   }
   

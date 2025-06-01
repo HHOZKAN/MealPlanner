@@ -22,14 +22,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void initState() {
     super.initState();
-    // Listen to auth state changes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listenManual(authStateProvider, (previous, next) {
-        if (next == AuthState.authenticated) {
-          context.go('/'); // Navigate to dashboard when authenticated
-        }
-      });
-    });
+    // Router will handle navigation automatically based on auth state
+    // No manual navigation needed here
   }
 
   @override

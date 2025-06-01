@@ -15,7 +15,7 @@ class IngredientRepository {
         ApiConstants.eventIngredients.replaceAll('{id}', eventId.toString()),
       );
       
-      print('Response received: ${response.data}');
+      print('Response received for event $eventId: ${response.data}');
       final data = response.data;
       
       if (data['status'] == 'success') {

@@ -68,6 +68,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{event}/participants/invite', [ParticipantController::class, 'invite']);
         Route::put('participants/{participant}', [ParticipantController::class, 'update']);
         Route::delete('participants/{participant}', [ParticipantController::class, 'destroy']);
+        Route::post('participants/accept-invitation', [ParticipantController::class, 'acceptInvitation']);
+        Route::get('{event}/participants/share-link', [ParticipantController::class, 'generateShareableLink']);
 
         // Ingrédients
         Route::get('{event}/ingredients', [IngredientController::class, 'index']);

@@ -23,6 +23,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  String? _eventId;
+  String? _token;
+
+  @override
+  void initState() {
+    super.initState();
+    final uri = Uri.base;
+    _eventId = uri.queryParameters['event_id'];
+    _token = uri.queryParameters['token'];
+  }
+
   @override
   void dispose() {
     _nameController.dispose();

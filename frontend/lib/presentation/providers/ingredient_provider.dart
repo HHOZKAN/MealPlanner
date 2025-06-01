@@ -36,7 +36,10 @@ class IngredientsStateNotifier extends StateNotifier<IngredientsState> {
   List<IngredientModel> _ingredients = [];
   String? _errorMessage;
   
-  IngredientsStateNotifier(this._ingredientRepository, this._eventId) : super(IngredientsState.initial);
+  IngredientsStateNotifier(this._ingredientRepository, this._eventId) : super(IngredientsState.initial) {
+    // Charger automatiquement les ingrédients lors de l'initialisation
+    loadIngredients();
+  }
   
   List<IngredientModel> get ingredients => _ingredients;
   String? get errorMessage => _errorMessage;

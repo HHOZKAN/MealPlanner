@@ -68,25 +68,27 @@ class EventRepository {
     String? emoji,
   }) async {
     try {
+      final Map<String, dynamic> requestData = {
+        'title': title,
+        'description': description,
+        'date': date.toIso8601String(),
+        'location': location,
+        'type': type,
+        'emoji': emoji,
+      };
+      
       final response = await _dioClient.post(
         ApiConstants.events,
-        data: {
-          'title': title,
-          'description': description,
-          'date': date.toIso8601String(),
-          'location': location,
-          'type': type,
-          'emoji': emoji,
-        },
+        data: requestData,
       );
 
-      final data = response.data;
+      final responseData = response.data;
 
-      if (data['status'] == 'success') {
-        return EventModel.fromJson(data['data']);
+      if (responseData['status'] == 'success') {
+        return EventModel.fromJson(responseData['data']);
       } else {
         throw Exception(
-            data['message'] ?? 'Erreur lors de la création de l\'événement');
+            responseData['message'] ?? 'Erreur lors de la création de l\'événement');
       }
     } catch (e) {
       if (e is DioException) {
@@ -191,14 +193,18 @@ class EventRepository {
     String? message,
   }) async {
     try {
-      final response = await _dioClient.post(
-        ApiConstants.eventParticipants.replaceAll('{id}', eventId.toString()) +
-            '/invite',
-        data: {
-          'email': email,
-          'message': message,
-        },
-      );
+      final url = ApiConstants.eventParticipants.replaceAll('{id}', eventId.toString()) + '/invite';
+      print('Inviting participant: $email to event $eventId');
+      print('URL: $url');
+      
+      final requestData = {
+        'email': email,
+        'message': message,
+      };
+      print('Request data: $requestData');
+      
+      final response = await _dioClient.post(url, data: requestData);
+      print('Response: ${response.data}');
 
       final data = response.data;
 
@@ -206,14 +212,58 @@ class EventRepository {
         throw Exception(
             data['message'] ?? 'Erreur lors de l\'invitation du participant');
       }
+      
+      print('Participant $email invited successfully');
     } catch (e) {
+      print('Error inviting participant $email: $e');
       if (e is DioException) {
+        print('DioException details: ${e.response?.statusCode} - ${e.response?.data}');
         final data = e.response?.data;
         throw Exception(
             data?['message'] ?? 'Erreur lors de l\'invitation du participant');
       }
       throw Exception(
           'Erreur lors de l\'invitation du participant: ${e.toString()}');
+    }
+  }
+
+  Future<void> createInvitation({
+    required int eventId,
+    required String nickname,
+    String? message,
+  }) async {
+    try {
+      final url = ApiConstants.eventParticipants.replaceAll('{id}', eventId.toString()) + '/invite';
+      print('Creating invitation for: $nickname to event $eventId');
+      print('URL: $url');
+      
+      final requestData = {
+        'nickname': nickname,
+        'message': message,
+      };
+      print('Request data: $requestData');
+      
+      final response = await _dioClient.post(url, data: requestData);
+      print('Response: ${response.data}');
+
+      final data = response.data;
+
+      if (data['status'] != 'success') {
+        throw Exception(
+            data['message'] ?? 'Erreur lors de la création de l\'invitation');
+      }
+      
+      print('Invitation for $nickname created successfully');
+    } catch (e) {
+      print('Error creating invitation for $nickname: $e');
+      if (e is DioException) {
+        print('DioException details: ${e.response?.statusCode} - ${e.response?.data}');
+        final data = e.response?.data;
+        throw Exception(
+            data?['message'] ?? 'Erreur lors de la création de l\'invitation');
+      }
+      throw Exception(
+          'Erreur lors de la création de l\'invitation: ${e.toString()}');
     }
   }
 }

@@ -15,15 +15,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = ref.read(authStateProvider);
-      if (authState == AuthState.authenticated) {
-        context.go('/');
-      } else if (authState == AuthState.unauthenticated) {
-        context.go('/login');
-      }
-      // else stay on splash or show loading
-    });
+    // Router will handle navigation automatically based on auth state
+    // No manual navigation needed here
   }
 
   @override
