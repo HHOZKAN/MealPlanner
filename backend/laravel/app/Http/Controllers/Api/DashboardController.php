@@ -35,7 +35,7 @@ class DashboardController extends Controller
                         ->count(),
                 ],
                 'expenses' => [
-                    'total_paid' => Expense::where('paid_by', $userId)->sum('amount'),
+                    'total_paid' => Expense::where('payer_id', $userId)->sum('amount'),
                     'total_owed' => DB::table('expense_shares')
                         ->where('user_id', $userId)
                         ->where('status', 'pending')
@@ -81,7 +81,7 @@ class DashboardController extends Controller
                     'title' => $event->title,
                     'date' => $event->date,
                     'total_expenses' => $event->expenses->sum('amount'),
-                    'participant_count' => $event->participants->count(),
+                    'participant_count' => $event->participants->count() + 1, // +1 pour inclure l'organisateur
                     'your_contribution' => $this->calculateContribution($event, Auth::id()),
                     'status' => $this->getEventStatus($event)
                 ];
@@ -127,7 +127,7 @@ class DashboardController extends Controller
 
             // Statistiques par type d'événement
             $eventTypeStats = Event::whereHas('expenses', function ($query) use ($userId) {
-                $query->where('paid_by', $userId);
+                $query->where('payer_id', $userId);
             })
             ->select('type', DB::raw('COUNT(*) as count'), DB::raw('SUM(expenses.amount) as total_amount'))
             ->join('expenses', 'events.id', '=', 'expenses.event_id')
@@ -153,7 +153,7 @@ class DashboardController extends Controller
 
     private function calculateBalance($userId)
     {
-        $paid = Expense::where('paid_by', $userId)->sum('amount');
+        $paid = Expense::where('payer_id', $userId)->sum('amount');
         $owed = DB::table('expense_shares')
             ->where('user_id', $userId)
             ->sum('amount');
@@ -164,7 +164,7 @@ class DashboardController extends Controller
     private function calculateContribution($event, $userId)
     {
         return $event->expenses()
-            ->where('paid_by', $userId)
+            ->where('payer_id', $userId)
             ->sum('amount');
     }
 

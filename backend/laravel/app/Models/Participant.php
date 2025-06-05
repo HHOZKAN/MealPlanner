@@ -9,6 +9,14 @@ class Participant extends Model
 {
     use HasFactory;
 
+    const STATUSES = [
+        'pending',
+        'accepted',
+        'declined',
+        'maybe'
+    ];
+
+
     protected $fillable = [
         'event_id',
         'user_id',

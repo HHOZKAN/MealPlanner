@@ -40,6 +40,8 @@ class AuthController extends Controller
                         ->uncompromised()
                 ],
                 'phone_number' => ['nullable', 'string', 'max:20', 'regex:/^([0-9\s\-\+\(\)]*)$/'],
+                'event_id' => ['nullable', 'integer', 'exists:events,id'],
+                'token' => ['nullable', 'string'],
             ], [
                 'name.required' => 'Le nom est obligatoire',
                 'email.required' => 'L\'email est obligatoire',
@@ -72,6 +74,14 @@ class AuthController extends Controller
                 event(new Registered($user));
 
                 $token = $user->createToken('auth_token')->plainTextToken;
+
+                // If token and event_id are provided, accept the invitation
+                if ($request->filled('token') && $request->filled('event_id')) {
+                    // Manually set the authenticated user for the request
+                    \Illuminate\Support\Facades\Auth::login($user);
+                    $invitationService = new \App\Services\InvitationService();
+                    $invitationService->acceptInvitation($request->input('token'));
+                }
 
                 DB::commit();
 

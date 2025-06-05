@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../presentation/providers/event_provider.dart';
 import '../../widgets/event_card.dart';
 import '../events/create_event_page.dart';
+import '../events/join_event_by_link_modal.dart';
 import '../../widgets/filled_tonal_icon_button.dart';
 
 final mealPlannerTheme = ThemeData(
@@ -131,10 +132,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ),
             child: FilledTonalIconButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CreateEventPage()),
-                );
+                _showAddEventModal(context);
               },
               icon: const Icon(Icons.add),
               tooltip: 'Ajouter un repas',
@@ -364,5 +362,149 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       default:
         return Colors.grey;
     }
+  }
+
+  void _showAddEventModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFF9F5F0), // Harmonisé avec create_event_page
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // En-tête avec titre et bouton de fermeture
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Color(0xFFFF5722)), // Couleur harmonisée
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          'Ajouter',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3142), // Couleur de texte harmonisée
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE0E0E0)),
+              
+              // Options
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: ListTile(
+                  leading: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                          spreadRadius: 0.5,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(Icons.add, color: Color(0xFFFF5722)), // Harmonisé
+                  ),
+                  title: const Text(
+                    'Créer un nouveau évènement',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Commence un nouveau évènement de zéro.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: const Color(0xFF2D3142).withOpacity(0.7),
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFFFF5722)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CreateEventPage()),
+                    );
+                  },
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: ListTile(  
+                  leading: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                          spreadRadius: 0.5,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(Icons.link, color: Color(0xFFFF5722)), // Harmonisé
+                  ),
+                  title: const Text(
+                    'Rejoins un évènement existant',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                  subtitle: Text(
+                    "Utilise un lien d'invitation pour rejoindre un évènement existant.",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: const Color(0xFF2D3142).withOpacity(0.7),
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: Color(0xFFFF5722)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) {
+                        return JoinEventByLinkModal(
+                          onCancel: () => Navigator.of(context).pop(),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

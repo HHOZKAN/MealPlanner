@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pending_invitations', function (Blueprint $table) {
+        Schema::create('shareable_invitation_links', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->string('email');
             $table->string('token')->unique();
-            $table->text('message')->nullable();
-            $table->timestamp('accepted_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pending_invitations');
+        Schema::dropIfExists('shareable_invitation_links');
     }
 };

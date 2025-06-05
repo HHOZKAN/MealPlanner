@@ -205,8 +205,9 @@ class IngredientController extends Controller
                 'quantity' => 'required|numeric|min:0|max:' . $ingredient->quantity
             ]);
 
-            // Vérifier si l'utilisateur est participant à l'événement
-            if (!$event->participants()->where('user_id', $validated['user_id'])->exists()) {
+            // Vérifier si l'utilisateur est participant à l'événement ou organisateur
+            if (!$event->participants()->where('user_id', $validated['user_id'])->exists() && 
+                $event->organizer_id !== $validated['user_id']) {
                 return $this->errorResponse('L\'utilisateur doit être participant à l\'événement', 422);
             }
 

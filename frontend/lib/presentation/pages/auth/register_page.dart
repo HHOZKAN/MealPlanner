@@ -58,6 +58,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               password: _passwordController.text,
               passwordConfirmation: _confirmPasswordController.text,
               phoneNumber: _phoneController.text.trim(),
+              eventId: _eventId,
+              token: _token,
             );
       } catch (e) {
         setState(() {

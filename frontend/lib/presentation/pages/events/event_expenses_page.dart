@@ -1,300 +1,269 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../presentation/providers/event_provider.dart';
+import '../../../presentation/providers/expense_provider_new.dart';
 import '../../../presentation/providers/auth_provider.dart';
-import '../../widgets/loading_indicator.dart';
-import '../../widgets/error_message.dart';
+import '../../../presentation/providers/reimbursement_provider.dart';
+import '../../widgets/edit_expense_modal.dart';
+import '../../widgets/reimbursement_card.dart';
 
-class EventExpensesPage extends ConsumerStatefulWidget {
+class EventExpensesPage extends ConsumerWidget {
   final int eventId;
-  
+
   const EventExpensesPage({
     Key? key,
     required this.eventId,
   }) : super(key: key);
 
   @override
-  ConsumerState<EventExpensesPage> createState() => _EventExpensesPageState();
-}
-
-class _EventExpensesPageState extends ConsumerState<EventExpensesPage> {
-  bool _isLoading = false;
-  String? _errorMessage;
-  
-  Future<void> _calculateExpenses() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    
-    try {
-      // Ici, vous devriez appeler votre API pour calculer les dépenses
-      // Pour l'exemple, nous allons simplement attendre un peu
-      await Future.delayed(const Duration(seconds: 1));
-      
-      // Rafraîchir les données
-      ref.refresh(eventProvider(widget.eventId));
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Dépenses calculées avec succès')),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final eventAsync = ref.watch(eventProvider(widget.eventId));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final expensesState = ref.watch(expensesStateProvider(eventId));
+    final notifier = ref.watch(expensesStateProvider(eventId).notifier);
     final currentUser = ref.watch(currentUserProvider);
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dépenses'),
-      ),
-      body: eventAsync.when(
-        data: (event) {
-          final isOrganizer = currentUser != null && event.organizerId == currentUser.id;
-          
-          // Pour l'exemple, nous allons simuler des dépenses
-          final expenses = [
-            {
-              'id': 1,
-              'description': 'Ingrédients principaux',
-              'amount': 45.50,
-              'paidBy': 'Jean Dupont',
-              'date': DateTime.now().subtract(const Duration(days: 2)),
-            },
-            {
-              'id': 2,
-              'description': 'Boissons',
-              'amount': 28.75,
-              'paidBy': 'Marie Martin',
-              'date': DateTime.now().subtract(const Duration(days: 1)),
-            },
-            {
-              'id': 3,
-              'description': 'Desserts',
-              'amount': 15.20,
-              'paidBy': 'Pierre Durand',
-              'date': DateTime.now(),
-            },
-          ];
-          
-          final totalExpenses = expenses.fold<double>(0, (sum, expense) => sum + (expense['amount'] as double));
-          final perPersonAmount = totalExpenses / (event.participants?.length ?? 1);
-          
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+    switch (expensesState) {
+      case ExpensesState.loading:
+        return const Center(child: CircularProgressIndicator());
+      
+      case ExpensesState.error:
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Erreur lors du chargement des dépenses',
+                style: TextStyle(color: Colors.red[700]),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => notifier.loadExpenses(),
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        );
+      
+      case ExpensesState.loaded:
+            final expenses = notifier.expenses;
+            
+            if (expenses.isEmpty) {
+              return const Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Message d'erreur
-                if (_errorMessage != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _errorMessage!,
-                      style: TextStyle(color: Colors.red.shade800),
-                    ),
-                  ),
-                
-                // Résumé des dépenses
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Résumé des dépenses',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total des dépenses:'),
-                            Text(
-                              NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(totalExpenses),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Nombre de participants:'),
-                            Text(
-                              '${event.participants?.length ?? 1}',
-                              style: theme.textTheme.titleMedium,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Montant par personne:'),
-                            Text(
-                              NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(perPersonAmount),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        if (isOrganizer) ...[
-                          const SizedBox(height: 16),
-                          const Divider(),
-                          const SizedBox(height: 16),
-                          
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _isLoading ? null : _calculateExpenses,
-                              icon: const Icon(Icons.calculate),
-                              label: _isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Recalculer les dépenses'),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                Icon(
+                  Icons.receipt_long,
+                  size: 64,
+                  color: Colors.grey,
                 ),
-                const SizedBox(height: 24),
-                
-                // Liste des dépenses
+                SizedBox(height: 16),
                 Text(
-                  'Détail des dépenses',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: expenses.length,
-                  itemBuilder: (context, index) {
-                    final expense = expenses[index];
-                    
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Text(expense['description'] as String),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Payé par: ${expense['paidBy']}'),
-                            Text(
-                              'Date: ${DateFormat('dd/MM/yyyy').format(expense['date'] as DateTime)}',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                        trailing: Text(
-                          NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(expense['amount']),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-                
-                // Remboursements
-                Text(
-                  'Remboursements à effectuer',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Exemple de remboursements
-                Card(
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.person),
-                    ),
-                    title: const Text('Marie Martin doit rembourser Jean Dupont'),
-                    subtitle: const Text('Pour: Ingrédients principaux'),
-                    trailing: Text(
-                      NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(15.20),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                Card(
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.person),
-                    ),
-                    title: const Text('Pierre Durand doit rembourser Jean Dupont'),
-                    subtitle: const Text('Pour: Ingrédients principaux'),
-                    trailing: Text(
-                      NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(10.30),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
+                  'Aucune dépense pour le moment',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
                   ),
                 ),
               ],
             ),
           );
-        },
-        loading: () => const LoadingIndicator(),
-        error: (error, stackTrace) => ErrorMessage(
-          message: 'Erreur lors du chargement de l\'événement: $error',
-          onRetry: () => ref.refresh(eventProvider(widget.eventId)),
-        ),
+        }
+
+        // Calculer les totaux
+        final myExpenses = expenses
+            .where((expense) => expense.payerId == currentUser?.id)
+            .fold(0.0, (sum, expense) => sum + expense.amount);
+        
+        final totalExpenses = expenses
+            .fold(0.0, (sum, expense) => sum + expense.amount);
+
+            // Observer les remboursements
+            final reimbursementsState = ref.watch(reimbursementProvider(eventId));
+
+            return Column(
+          children: [
+            // Expenses Summary
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildExpenseCard(
+                    'Mes dépenses',
+                    myExpenses,
+                    const Color(0xFFFF5722),
+                  ),
+                  _buildExpenseCard(
+                    'Dépenses totales',
+                    totalExpenses,
+                    const Color(0xFF2D3142),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Expenses and Reimbursements List
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await notifier.loadExpenses();
+                  ref.read(reimbursementProvider(eventId).notifier).calculateReimbursements();
+                },
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  child: Column(
+                    children: [
+                      // Afficher les remboursements en premier
+                      reimbursementsState.when(
+                        data: (reimbursements) {
+                          if (reimbursements.isNotEmpty) {
+                            return Column(
+                              children: reimbursements.map((reimbursement) => 
+                                ReimbursementCard(
+                                  reimbursement: reimbursement,
+                                  currentUserId: currentUser?.id ?? -1,
+                                  onMarkAsPaid: () {
+                                    ref.read(reimbursementProvider(eventId).notifier).markAsPaid(
+                                      fromUserId: reimbursement.fromUserId,
+                                      toUserId: reimbursement.toUserId,
+                                    );
+                                  },
+                                )
+                              ).toList(),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (error, stack) => const SizedBox.shrink(),
+                      ),
+                      
+                      // Puis afficher les dépenses
+                      ...expenses.map((expense) {
+                        final isMyExpense = expense.payerId == currentUser?.id;
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          color: Colors.white,
+                          elevation: 2,
+                          child: InkWell(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => EditExpenseModal(
+                                  eventId: eventId,
+                                  expense: expense,
+                                ),
+                              );
+                            },
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              leading: CircleAvatar(
+                                backgroundColor: isMyExpense 
+                                    ? const Color(0xFFFF5722) 
+                                    : const Color(0xFF2D3142),
+                                child: const Icon(
+                                  Icons.receipt,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              title: Text(
+                                expense.ingredientName ?? 'Dépense',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2D3142),
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Payé par ${isMyExpense ? 'vous' : expense.payerName ?? 'Inconnu'}',
+                                    style: TextStyle(
+                                      color: const Color(0xFF2D3142).withOpacity(0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              trailing: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    NumberFormat.currency(locale: 'fr_FR', symbol: '€')
+                                        .format(expense.amount),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2D3142),
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  if (expense.shares.containsKey(currentUser?.id.toString())) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Votre part: ${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(expense.shares[currentUser!.id.toString()] ?? 0)}',
+                                      style: TextStyle(
+                                        color: const Color(0xFF2D3142).withOpacity(0.7),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildExpenseCard(String title, double amount, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: color.withOpacity(0.7),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(amount),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

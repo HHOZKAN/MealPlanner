@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../presentation/providers/ingredient_provider.dart';
 import '../../../presentation/providers/auth_provider.dart';
+import 'ingredient_detail_page.dart';
 
 class EventIngredientsPage extends ConsumerStatefulWidget {
   final int eventId;
@@ -66,6 +67,7 @@ class _EventIngredientsPageState extends ConsumerState<EventIngredientsPage> {
               }
               
               return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 80),
                 itemCount: ingredients.length,
                 itemBuilder: (context, index) {
                   final ingredient = ingredients[index];
@@ -95,7 +97,23 @@ class _EventIngredientsPageState extends ConsumerState<EventIngredientsPage> {
                         ),
                         child: InkWell(
                           onTap: () {
-                            // Action au tap de l'ingrédient
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: const Color(0xFFF9F5F0), // Ajout du fond harmonisé
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                              ),
+                              builder: (context) {
+                                return FractionallySizedBox(
+                                  heightFactor: 0.9,
+                                  child: IngredientDetailPage(
+                                    eventId: widget.eventId,
+                                    ingredientId: ingredient.id,
+                                  ),
+                                );
+                              },
+                            );
                           },
                           borderRadius: BorderRadius.circular(16),
                           child: Padding(
@@ -194,11 +212,13 @@ class _EventIngredientsPageState extends ConsumerState<EventIngredientsPage> {
                                     const SizedBox(height: 4),
                                     if (ingredient.assignments != null && ingredient.assignments!.isNotEmpty)
                                       Text(
-                                        'Assigné', // Texte simplifié pour éviter l'erreur
+                                        'Qui achète : ${ingredient.assignments!.map((a) => a.user?.name ?? 'Inconnu').join(', ')}',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: Colors.grey[600],
                                         ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                       ),
                                   ],
                                 ),

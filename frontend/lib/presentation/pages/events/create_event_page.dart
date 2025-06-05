@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../presentation/providers/event_provider.dart';
+import '../../../presentation/providers/event_share_link_provider.dart';
 import '../../widgets/participant_selector.dart';
+import '../events/invite_participants_modal.dart';
 
 class CreateEventPage extends ConsumerStatefulWidget {
   const CreateEventPage({Key? key}) : super(key: key);
@@ -191,22 +193,23 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
         
         print('Event created with ID: ${event.id}');
         
-        // Créer les invitations pour les participants
-        if (_selectedNicknames.isNotEmpty) {
-          print('Creating invitations for ${_selectedNicknames.length} participants');
-          for (final nickname in _selectedNicknames) {
-            print('Creating invitation for participant: $nickname');
-            await ref.read(eventRepositoryProvider).createInvitation(
-              eventId: event.id,
-              nickname: nickname,
-            );
-          }
-          print('All invitations created successfully');
-        } else {
-          print('No participants to invite');
-        }
+        // Fetch shareable link using eventShareLinkProvider
+        final shareableLink = await ref.read(eventShareLinkProvider(event.id).future);
         
+        // Show invite participants modal after event creation
         if (mounted) {
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => InviteParticipantsModal(
+            nicknames: _selectedNicknames,
+            invitationLink: shareableLink,
+            onInviteLater: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        );
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Événement créé avec succès')),

@@ -232,4 +232,28 @@ class IngredientRepository {
       throw Exception('Erreur lors de la mise à jour de l\'assignation');
     }
   }
+  
+  Future<void> removeAssignment({
+    required int eventId,
+    required int ingredientId,
+    required int assignmentId,
+  }) async {
+    try {
+      final response = await _dioClient.delete(
+        '${ApiConstants.eventIngredients.replaceAll('{id}', eventId.toString())}/$ingredientId/assignments/$assignmentId',
+      );
+      
+      final data = response.data;
+      
+      if (data['status'] != 'success') {
+        throw Exception(data['message'] ?? 'Erreur lors de la suppression de l\'assignation');
+      }
+    } catch (e) {
+      if (e is DioException) {
+        final data = e.response?.data;
+        throw Exception(data?['message'] ?? 'Erreur lors de la suppression de l\'assignation');
+      }
+      throw Exception('Erreur lors de la suppression de l\'assignation');
+    }
+  }
 }

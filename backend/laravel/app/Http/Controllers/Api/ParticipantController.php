@@ -98,88 +98,17 @@ class ParticipantController extends Controller
     public function invite(Request $request, Event $event)
     {
         try {
-            // Vérifier que c'est bien l'organisateur qui invite
             if ($event->organizer_id !== Auth::id()) {
                 return $this->errorResponse('Seul l\'organisateur peut inviter des participants', 403);
             }
 
             // Valider les données
             $validated = $request->validate([
-                'email' => 'required_without:nickname|email|nullable',
-                'nickname' => 'required_without:email|string|nullable',
+                'nickname' => 'nullable|string',
                 'message' => 'nullable|string'
             ]);
 
-            // Si un email est fourni, utiliser le processus d'invitation par email
-            if (!empty($validated['email'])) {
-                // Vérifier si l'utilisateur existe déjà
-                $user = User::where('email', $validated['email'])->first();
-
-                if ($user) {
-                    // Vérifier si l'utilisateur n'est pas déjà invité
-                    $existingParticipant = $event->participants()
-                        ->where('user_id', $user->id)
-                        ->first();
-
-                    if ($existingParticipant) {
-                        return $this->errorResponse('Cet utilisateur est déjà invité', 422);
-                    }
-
-                    // Créer la participation
-                    $participant = $event->participants()->create([
-                        'user_id' => $user->id,
-                        'status' => 'pending'
-                    ]);
-
-                    // Envoyer l'email d'invitation
-                    Mail::to($user->email)
-                        ->queue(new EventInvitation(
-                            $event,
-                            $validated['message'] ?? null,
-                            false
-                        ));
-
-                    Log::info('Invitation envoyée à un utilisateur existant', [
-                        'user_id' => $user->id,
-                        'event_id' => $event->id
-                    ]);
-
-                    return $this->successResponse([
-                        'participant' => $participant->load('user'),
-                        'type' => 'existing_user'
-                    ], 'Invitation envoyée avec succès');
-                } else {
-                    // Créer une invitation en attente pour un nouvel utilisateur
-                    $token = Str::random(32);
-                    $pendingInvitation = $event->pendingInvitations()->create([
-                        'email' => $validated['email'],
-                        'message' => $validated['message'] ?? null,
-                        'token' => $token
-                    ]);
-
-                    // Envoyer l'email d'invitation
-                    Mail::to($validated['email'])
-                        ->queue(new EventInvitation(
-                            $event,
-                            $validated['message'] ?? null,
-                            true,
-                            $token
-                        ));
-
-                    Log::info('Invitation envoyée à un nouvel utilisateur', [
-                        'email' => $validated['email'],
-                        'event_id' => $event->id
-                    ]);
-
-                    return $this->successResponse([
-                        'invitation' => $pendingInvitation,
-                        'type' => 'new_user'
-                    ], 'Invitation envoyée par email');
-                }
-            }
-            // Si un pseudo est fourni, créer une invitation en attente avec pseudo
-            else if (!empty($validated['nickname'])) {
-                // Vérifier si le pseudo n'est pas déjà invité
+            if (!empty($validated['nickname'])) {
                 $existingPendingParticipant = $event->pendingParticipants()
                     ->where('nickname', $validated['nickname'])
                     ->first();
@@ -188,7 +117,6 @@ class ParticipantController extends Controller
                     return $this->errorResponse('Ce pseudo est déjà invité', 422);
                 }
 
-                // Créer l'invitation en attente
                 $pendingParticipant = $event->pendingParticipants()->create([
                     'nickname' => $validated['nickname'],
                     'message' => $validated['message'] ?? null,
@@ -206,8 +134,7 @@ class ParticipantController extends Controller
                 ], 'Invitation créée avec succès');
             }
 
-            return $this->errorResponse('Email ou pseudo requis', 422);
-
+            return $this->errorResponse('Pseudo requis', 422);
         } catch (\Exception $e) {
             Log::error('Erreur lors de l\'invitation:', [
                 'error' => $e->getMessage(),
@@ -310,45 +237,14 @@ class ParticipantController extends Controller
      */
     public function acceptInvitation(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'token' => 'required|string',
-            ]);
+        $token = $request->input('token');
+        $invitationService = new \App\Services\InvitationService();
+        $participant = $invitationService->acceptInvitation($token);
 
-            $token = $validated['token'];
-            $userId = Auth::id();
-
-            // Chercher l'invitation en attente par token
-            $pendingInvitation = \App\Models\PendingInvitation::where('token', $token)->first();
-
-            if (!$pendingInvitation) {
-                return $this->errorResponse('Invitation invalide ou expirée', 404);
-            }
-
-            $event = $pendingInvitation->event;
-
-            // Vérifier si l'utilisateur est déjà participant
-            $existingParticipant = $event->participants()->where('user_id', $userId)->first();
-            if ($existingParticipant) {
-                return $this->successResponse($existingParticipant, 'Vous êtes déjà participant de cet événement');
-            }
-
-            // Ajouter l'utilisateur comme participant
-            $participant = $event->participants()->create([
-                'user_id' => $userId,
-                'status' => 'accepted',
-            ]);
-
-            // Supprimer l'invitation en attente
-            $pendingInvitation->delete();
-
+        if ($participant) {
             return $this->successResponse($participant->load('user'), 'Invitation acceptée avec succès');
-        } catch (\Exception $e) {
-            Log::error('Erreur lors de l\'acceptation de l\'invitation:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return $this->errorResponse('Erreur lors de l\'acceptation de l\'invitation', 500);
+        } else {
+            return $this->errorResponse('Invitation invalide ou expirée', 404);
         }
     }
 }

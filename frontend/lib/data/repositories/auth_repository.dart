@@ -15,17 +15,26 @@ class AuthRepository {
     required String password,
     required String passwordConfirmation,
     String? phoneNumber,
+    String? eventId,
+    String? token,
   }) async {
     try {
+      final dataToSend = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+        'phone_number': phoneNumber,
+      };
+      if (eventId != null) {
+        dataToSend['event_id'] = eventId;
+      }
+      if (token != null) {
+        dataToSend['token'] = token;
+      }
       final response = await _dioClient.post(
         ApiConstants.register,
-        data: {
-          'name': name,
-          'email': email,
-          'password': password,
-          'password_confirmation': passwordConfirmation,
-          'phone_number': phoneNumber,
-        },
+        data: dataToSend,
       );
       
       final data = response.data;

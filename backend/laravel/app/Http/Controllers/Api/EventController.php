@@ -64,7 +64,16 @@ class EventController extends Controller
                 'status' => 'draft'
             ]);
 
-            Log::info('Événement créé', ['event_id' => $event->id]);
+            // Ajouter automatiquement le créateur comme participant
+            $event->participants()->create([
+                'user_id' => Auth::id(),
+                'status' => 'accepted'
+            ]);
+
+            Log::info('Événement créé avec organisateur ajouté comme participant', [
+                'event_id' => $event->id,
+                'organizer_id' => Auth::id()
+            ]);
 
             return $this->successResponse($event, 'Événement créé avec succès', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {

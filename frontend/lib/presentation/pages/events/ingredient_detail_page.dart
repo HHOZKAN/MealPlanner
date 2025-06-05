@@ -31,12 +31,15 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
   late TextEditingController _quantityController;
   late TextEditingController _priceController;
   late TextEditingController _notesController;
-  
+
   String? _selectedUnit;
   bool _isEditing = false;
   bool _isLoading = false;
   String? _errorMessage;
-  
+
+  // Add this field to track selected participants
+  final Set<int> _selectedParticipants = {};
+
   @override
   void initState() {
     super.initState();
@@ -45,7 +48,7 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
     _priceController = TextEditingController();
     _notesController = TextEditingController();
   }
-  
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -54,13 +57,23 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
     _notesController.dispose();
     super.dispose();
   }
-  
+
   void _initControllers(IngredientModel ingredient) {
     _nameController.text = ingredient.name;
     _quantityController.text = ingredient.quantity.toString();
     _priceController.text = ingredient.estimatedPrice?.toString() ?? '';
     _notesController.text = ingredient.notes ?? '';
     _selectedUnit = ingredient.unit;
+    
+    // Initialize selected participants from existing assignments
+    _selectedParticipants.clear();
+    if (ingredient.assignments != null) {
+      for (var assignment in ingredient.assignments!) {
+        if (assignment.status != 'purchased') {
+          _selectedParticipants.add(assignment.userId);
+        }
+      }
+    }
   }
   
   Future<void> _updateIngredient(IngredientModel ingredient) async {
@@ -339,13 +352,10 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
             ? double.parse(pricePaidController.text) 
             : null;
         
-        // Ici, vous devriez implémenter le code pour convertir l'image en base64
-        // et l'envoyer au serveur
+       
         String? receiptImageBase64;
         if (receiptImage != null) {
-          // Conversion de l'image en base64
-          // receiptImageBase64 = base64Encode(receiptImage!.readAsBytesSync());
-          // Pour l'exemple, nous allons simplement utiliser le chemin de l'image
+ 
           receiptImageBase64 = receiptImage!.path;
         }
         
@@ -387,36 +397,11 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
     final currentUser = ref.watch(currentUserProvider);
     final units = ref.watch(ingredientUnitsProvider);
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Détail de l\'ingrédient'),
-        actions: [
-          ingredientAsync.when(
-            data: (ingredient) {
-              final isOrganizer = currentUser != null && ingredient.addedBy == currentUser.id;
-              
-              return isOrganizer
-                  ? IconButton(
-                      icon: Icon(_isEditing ? Icons.check : Icons.edit),
-                      onPressed: () {
-                        if (_isEditing) {
-                          _updateIngredient(ingredient);
-                        } else {
-                          setState(() {
-                            _isEditing = true;
-                            _initControllers(ingredient);
-                          });
-                        }
-                      },
-                    )
-                  : const SizedBox.shrink();
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-        ],
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      body: ingredientAsync.when(
+      child: ingredientAsync.when(
         data: (ingredient) {
           // Initialiser les contrôleurs si ce n'est pas déjà fait
           if (!_isEditing) {
@@ -442,9 +427,399 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
           
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
-            child: _isEditing
-                ? _buildEditForm(ingredient, units, theme)
-                : _buildDetailView(ingredient, units, theme, currentUserAssignment),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // En-tête
+                Text(
+                  ingredient.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF2D3142),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Message d'erreur
+                if (_errorMessage != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red.shade800),
+                    ),
+                  ),
+                
+                // Quantité et unité
+                Text(
+                  'Détails de l\'ingrédient',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    // Quantité
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                              spreadRadius: 0.5,
+                            ),
+                          ],
+                        ),
+                        child: TextFormField(
+                          controller: _quantityController,
+                          style: const TextStyle(color: Color(0xFF2D3142)),
+                          decoration: InputDecoration(
+                            labelText: 'Quantité',
+                            labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                            prefixIcon: const Icon(Icons.scale, color: Color(0xFFFF5722)),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(color: Color(0xFFFF5722)),
+                            ),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Unité
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                              spreadRadius: 0.5,
+                            ),
+                          ],
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedUnit,
+                          decoration: InputDecoration(
+                            labelText: 'Unité',
+                            labelStyle: const TextStyle(color: Color(0xFF2D3142)),
+                            prefixIcon: const Icon(Icons.straighten, color: Color(0xFFFF5722)),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(color: Color(0xFFFF5722)),
+                            ),
+                          ),
+                          items: units.entries.map((entry) {
+                            return DropdownMenuItem<String>(
+                              value: entry.key,
+                              child: Text(
+                                entry.value,
+                                style: const TextStyle(color: Color(0xFF2D3142)),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedUnit = value;
+                              });
+                            }
+                          },
+                          dropdownColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                // Qui achète
+                Text(
+                  'Qui achète ?',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D3142),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 0.5,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final participantsAsync = ref.watch(eventParticipantsProvider(widget.eventId));
+                      final eventAsync = ref.watch(eventProvider(widget.eventId));
+                      
+                      return participantsAsync.when(
+                        data: (participants) {
+                          // Créer une liste combinée avec l'organisateur et les participants
+                          final List<Map<String, dynamic>> allUsers = [];
+                          
+                          // Ajouter l'organisateur
+                          eventAsync.whenData((event) {
+                            if (event.organizer != null) {
+                              allUsers.add({
+                                'id': event.organizer!.id,
+                                'name': event.organizer!.name,
+                                'isOrganizer': true,
+                              });
+                            }
+                          });
+                          
+                          // Ajouter les participants (en évitant les doublons avec l'organisateur)
+                          for (final participant in participants) {
+                            if (participant.user != null && !allUsers.any((u) => u['id'] == participant.user!.id)) {
+                              allUsers.add({
+                                'id': participant.user!.id,
+                                'name': participant.user!.name,
+                                'isOrganizer': false,
+                              });
+                            }
+                          }
+                          
+                          if (allUsers.isEmpty) {
+                            return const Text(
+                              'Aucun participant disponible',
+                              style: TextStyle(color: Color(0xFF2D3142)),
+                            );
+                          }
+                          
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: allUsers.map((user) {
+                              final isSelected = _selectedParticipants.contains(user['id']);
+                              return FilterChip(
+                                label: Text(user['name']),
+                                selected: isSelected,
+                                backgroundColor: Colors.white,
+                                selectedColor: const Color(0xFFFF5722).withOpacity(0.1),
+                                labelStyle: TextStyle(
+                                  color: isSelected ? const Color(0xFFFF5722) : const Color(0xFF2D3142),
+                                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(
+                                    color: isSelected ? const Color(0xFFFF5722) : Colors.grey.withOpacity(0.3),
+                                  ),
+                                ),
+                                onSelected: (selected) async {
+                                  if (selected) {
+                                    setState(() {
+                                      _selectedParticipants.add(user['id']);
+                                    });
+                                    try {
+                                      final notifier = ref.read(ingredientsStateProvider(widget.eventId).notifier);
+                                      await notifier.assignIngredient(
+                                        ingredientId: widget.ingredientId,
+                                        userId: user['id'],
+                                        quantity: double.parse(_quantityController.text),
+                                      );
+                                      ref.refresh(ingredientProvider((eventId: widget.eventId, ingredientId: widget.ingredientId)));
+                                    } catch (e) {
+                                      setState(() {
+                                        _selectedParticipants.remove(user['id']);
+                                        _errorMessage = e.toString();
+                                      });
+                                    }
+                                  } else {
+                                    final existingAssignments = ingredient.assignments ?? [];
+                                    final assignment = existingAssignments.firstWhere(
+                                      (a) => a.userId == user['id'] && a.status != 'purchased',
+                                      orElse: () => throw Exception('Assignment not found'),
+                                    );
+                                    
+                                    try {
+                                      setState(() {
+                                        _selectedParticipants.remove(user['id']);
+                                      });
+                                      final notifier = ref.read(ingredientsStateProvider(widget.eventId).notifier);
+                                      await notifier.removeAssignment(
+                                        ingredientId: widget.ingredientId,
+                                        assignmentId: assignment.id,
+                                      );
+                                      ref.refresh(ingredientProvider((eventId: widget.eventId, ingredientId: widget.ingredientId)));
+                                    } catch (e) {
+                                      setState(() {
+                                        _selectedParticipants.add(user['id']);
+                                        _errorMessage = e.toString();
+                                      });
+                                    }
+                                  }
+                                },
+                              );
+                            }).toList(),
+                          );
+                        },
+                      loading: () => const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF5722)),
+                          ),
+                        ),
+                      ),
+                      error: (error, stack) => Text(
+                        'Erreur: $error',
+                        style: TextStyle(color: Colors.red.shade800),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 32),
+              
+              // Bouton Assigner
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : () async {
+                    setState(() {
+                      _isLoading = true;
+                      _errorMessage = null;
+                    });
+                    try {
+                      final quantity = double.tryParse(_quantityController.text) ?? 0;
+                      if (quantity <= 0) {
+                        setState(() {
+                          _errorMessage = 'Quantité invalide';
+                          _isLoading = false;
+                        });
+                        return;
+                      }
+
+                      final notifier = ref.read(ingredientsStateProvider(widget.eventId).notifier);
+                      final existingAssignments = ingredient.assignments ?? [];
+
+                      // Supprimer les assignations des participants non sélectionnés
+                      for (final assignment in existingAssignments) {
+                        if (!_selectedParticipants.contains(assignment.userId) && assignment.status != 'purchased') {
+                          await notifier.removeAssignment(
+                            ingredientId: widget.ingredientId,
+                            assignmentId: assignment.id,
+                          );
+                        }
+                      }
+
+                      // Ajouter ou mettre à jour les assignations pour les participants sélectionnés
+                      for (final userId in _selectedParticipants) {
+                        final existingAssignment = existingAssignments
+                            .where((a) => a.userId == userId && a.status != 'purchased')
+                            .firstOrNull;
+                            
+                        if (existingAssignment == null) {
+                          // Créer une nouvelle assignation si aucune n'existe
+                          await notifier.assignIngredient(
+                            ingredientId: widget.ingredientId,
+                            userId: userId,
+                            quantity: quantity,
+                          );
+                        }
+                      }
+
+                      ref.refresh(ingredientProvider((eventId: widget.eventId, ingredientId: widget.ingredientId)));
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Ingrédient assigné avec succès')),
+                        );
+                        Navigator.of(context).pop();
+                      }
+                    } catch (e) {
+                      setState(() {
+                        _errorMessage = e.toString();
+                      });
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF5722),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    elevation: 2,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('Assigner'),
+                ),
+              ),
+            ],
+          )
           );
         },
         loading: () => const LoadingIndicator(),
@@ -600,12 +975,20 @@ class _IngredientDetailPageState extends ConsumerState<IngredientDetailPage> {
                   onPressed: _isLoading
                       ? null
                       : () => _updateIngredient(ingredient),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF5722),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    elevation: 2,
+                  ),
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Text('Enregistrer'),

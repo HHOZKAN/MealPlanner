@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/event_model.dart';
+import '../providers/event_participants_provider.dart';
 
-class EventCard extends StatelessWidget {
+class EventCard extends ConsumerWidget {
   final EventModel event;
   final VoidCallback onTap;
   final bool isPast;
@@ -18,7 +20,7 @@ class EventCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Card(
@@ -84,10 +86,25 @@ class EventCard extends StatelessWidget {
                           color: Colors.grey.shade600,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          '${event.participants?.length ?? 0} Participants',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey.shade600,
+                        ref.watch(participantCountProvider(event.id)).when(
+                          data: (count) => Text(
+                            '$count Participants',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          loading: () => const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          error: (_, __) => Text(
+                            '? Participants',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/network/dio_client.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
+import 'event_provider.dart';
 
 // Provider pour le client Dio
 final dioClientProvider = Provider<DioClient>((ref) {
@@ -28,10 +29,11 @@ enum AuthState {
 // État de l'authentification
 class AuthStateNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
+  final Ref _ref;
   UserModel? _user;
   String? _errorMessage;
 
-  AuthStateNotifier(this._authRepository) : super(AuthState.initial) {
+  AuthStateNotifier(this._authRepository, this._ref) : super(AuthState.initial) {
     checkAuthStatus();
   }
 
@@ -72,6 +74,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     required String password,
     required String passwordConfirmation,
     String? phoneNumber,
+    String? eventId,
+    String? token,
   }) async {
     try {
       state = AuthState.loading;
@@ -81,7 +85,15 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         password: password,
         passwordConfirmation: passwordConfirmation,
         phoneNumber: phoneNumber,
+        eventId: eventId,
+        token: token,
       );
+      // L'appel à acceptInvitation est géré côté backend lors de l'inscription avec token
+      if (token != null && token.isNotEmpty) {
+        // Rafraîchir la liste des événements après inscription avec token
+        final eventsNotifier = _ref.read(eventsStateProvider.notifier);
+        await eventsNotifier.loadEvents();
+      }
       state = AuthState.authenticated;
     } catch (e) {
       _errorMessage = e.toString();
@@ -133,7 +145,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 // Provider pour l'état d'authentification
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
-  return AuthStateNotifier(authRepository);
+  return AuthStateNotifier(authRepository, ref);
 });
 
 // Provider pour l'utilisateur courant

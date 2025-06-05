@@ -180,6 +180,25 @@ class IngredientsStateNotifier extends StateNotifier<IngredientsState> {
       state = IngredientsState.error;
     }
   }
+
+  Future<void> removeAssignment({
+    required int ingredientId,
+    required int assignmentId,
+  }) async {
+    try {
+      state = IngredientsState.loading;
+      await _ingredientRepository.removeAssignment(
+        eventId: _eventId,
+        ingredientId: ingredientId,
+        assignmentId: assignmentId,
+      );
+      _ingredients = await _ingredientRepository.getIngredients(_eventId);
+      state = IngredientsState.loaded;
+    } catch (e) {
+      _errorMessage = e.toString();
+      state = IngredientsState.error;
+    }
+  }
 }
 
 // Provider pour l'état des ingrédients d'un événement

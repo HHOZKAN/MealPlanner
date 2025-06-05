@@ -40,6 +40,7 @@ Route::prefix('auth')->group(function () {
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
 });
 
+
 // Routes protégées
 Route::middleware(['auth:sanctum'])->group(function () {
     // Routes Auth
@@ -80,15 +81,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{event}/ingredients/{ingredient}/assign', [IngredientController::class, 'assign']);
         Route::get('{event}/ingredients/{ingredient}/assignments', [IngredientController::class, 'assignments']);
         Route::put('{event}/ingredients/{ingredient}/assignments/{assignment}', [IngredientController::class, 'updateAssignment']);
+        Route::delete('{event}/ingredients/{ingredient}/assignments/{assignment}', [\App\Http\Controllers\Api\IngredientAssignmentController::class, 'destroy']);
 
         // Dépenses
+        Route::get('{event}/expenses', [ExpenseController::class, 'index']);
+        Route::post('{event}/expenses', [ExpenseController::class, 'store']);
+        Route::put('{event}/expenses/{expense}', [ExpenseController::class, 'update']);
         Route::post('{event}/expenses/calculate', [ExpenseController::class, 'calculateExpenses']);
         Route::get('{event}/expenses/summary', [ExpenseController::class, 'summary']);
+        Route::get('{event}/expenses/balances', [ExpenseController::class, 'balances']);
         Route::post('{event}/expenses/shares/{share}/paid', [ExpenseController::class, 'markAsPaid']);
 
         // Remboursement
         Route::post('{event}/reimbursements/calculate', [ReimbursementController::class, 'calculateReimbursements']);
-        Route::post('{event}/reimbursements/{reimbursement}/paid', [ReimbursementController::class, 'markAsPaid']);
+        Route::post('{event}/reimbursements/paid', [ReimbursementController::class, 'markAsPaid']);
+        
     });
 
 
