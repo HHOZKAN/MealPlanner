@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../presentation/providers/auth_provider.dart';
 import '../../../presentation/providers/balance_provider.dart';
 import '../../../presentation/providers/reimbursement_provider.dart';
+import '../../../presentation/providers/paid_reimbursement_provider.dart';
 import '../../../data/models/balance_model.dart';
 import '../../widgets/balance_detail_modal.dart';
 
@@ -157,6 +158,10 @@ class EventBalancesPage extends ConsumerWidget {
                     onMarkAsPaid: (fromUserId, toUserId) {
                       // Rafraîchir les soldes après marquage
                       balancesNotifier.refresh();
+                      // Rafraîchir les remboursements en attente
+                      ref.read(reimbursementProvider(eventId).notifier).calculateReimbursements();
+                      // Rafraîchir les remboursements payés
+                      ref.invalidate(paidReimbursementProvider(eventId));
                     },
                     onRequestPayment: (fromUserId, toUserId) {
                       // TODO: Implémenter la logique de demande de paiement

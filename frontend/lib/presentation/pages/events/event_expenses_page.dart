@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 import '../../../presentation/providers/expense_provider_new.dart';
 import '../../../presentation/providers/auth_provider.dart';
 import '../../../presentation/providers/reimbursement_provider.dart';
+import '../../../presentation/providers/paid_reimbursement_provider.dart';
 import '../../widgets/edit_expense_modal.dart';
 import '../../widgets/reimbursement_card.dart';
+import '../../widgets/paid_reimbursement_card.dart';
 
 class EventExpensesPage extends ConsumerWidget {
   final int eventId;
@@ -108,28 +110,77 @@ class EventExpensesPage extends ConsumerWidget {
                 onRefresh: () async {
                   await notifier.loadExpenses();
                   ref.read(reimbursementProvider(eventId).notifier).calculateReimbursements();
+                  ref.invalidate(paidReimbursementProvider(eventId));
                 },
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
                   child: Column(
                     children: [
-                      // Afficher les remboursements en premier
+                      // Afficher les remboursements en attente
                       reimbursementsState.when(
                         data: (reimbursements) {
                           if (reimbursements.isNotEmpty) {
                             return Column(
-                              children: reimbursements.map((reimbursement) => 
-                                ReimbursementCard(
-                                  reimbursement: reimbursement,
-                                  currentUserId: currentUser?.id ?? -1,
-                                  onMarkAsPaid: () {
-                                    ref.read(reimbursementProvider(eventId).notifier).markAsPaid(
-                                      fromUserId: reimbursement.fromUserId,
-                                      toUserId: reimbursement.toUserId,
-                                    );
-                                  },
-                                )
-                              ).toList(),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  child: Text(
+                                    'Remboursements en attente',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2D3142),
+                                    ),
+                                  ),
+                                ),
+                                ...reimbursements.map((reimbursement) => 
+                                  ReimbursementCard(
+                                    reimbursement: reimbursement,
+                                    currentUserId: currentUser?.id ?? -1,
+                                    eventId: eventId,
+                                    onMarkAsPaid: () {
+                                      ref.read(reimbursementProvider(eventId).notifier).markAsPaid(
+                                        fromUserId: reimbursement.fromUserId,
+                                        toUserId: reimbursement.toUserId,
+                                      );
+                                    },
+                                  )
+                                ).toList(),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (error, stack) => const SizedBox.shrink(),
+                      ),
+
+                      // Afficher les remboursements payés
+                      ref.watch(paidReimbursementProvider(eventId)).when(
+                        data: (paidReimbursements) {
+                          if (paidReimbursements.isNotEmpty) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  child: Text(
+                                    'Remboursements effectués',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2D3142),
+                                    ),
+                                  ),
+                                ),
+                                ...paidReimbursements.map((reimbursement) => 
+                                  PaidReimbursementCard(
+                                    reimbursement: reimbursement,
+                                    currentUserId: currentUser?.id ?? -1,
+                                  )
+                                ).toList(),
+                              ],
                             );
                           }
                           return const SizedBox.shrink();
@@ -138,7 +189,18 @@ class EventExpensesPage extends ConsumerWidget {
                         error: (error, stack) => const SizedBox.shrink(),
                       ),
                       
-                      // Puis afficher les dépenses
+                      // Afficher les dépenses
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'Dépenses',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3142),
+                          ),
+                        ),
+                      ),
                       ...expenses.map((expense) {
                         final isMyExpense = expense.payerId == currentUser?.id;
 

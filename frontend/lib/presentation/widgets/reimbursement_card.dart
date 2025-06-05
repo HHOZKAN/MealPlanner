@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/reimbursement_model.dart';
+import '../providers/paid_reimbursement_provider.dart';
 
-class ReimbursementCard extends StatelessWidget {
+class ReimbursementCard extends ConsumerWidget {
   final ReimbursementModel reimbursement;
   final int currentUserId;
   final VoidCallback? onMarkAsPaid;
+  final int eventId;
 
   const ReimbursementCard({
     Key? key,
     required this.reimbursement,
     required this.currentUserId,
+    required this.eventId,
     this.onMarkAsPaid,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currencyFormat = NumberFormat.currency(locale: 'fr_FR', symbol: '€');
     final isPending = reimbursement.status == 'pending';
     final isFromCurrentUser = reimbursement.fromUserId == currentUserId;
@@ -67,7 +71,12 @@ class ReimbursementCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: onMarkAsPaid,
+                  onPressed: () {
+                    // Rafraîchir les remboursements payés
+                    ref.invalidate(paidReimbursementProvider(eventId));
+                    // Appeler le callback
+                    onMarkAsPaid?.call();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,

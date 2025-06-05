@@ -5,6 +5,8 @@ import '../../data/models/balance_model.dart';
 import '../../data/models/reimbursement_model.dart';
 import '../providers/reimbursement_provider.dart';
 import '../providers/balance_provider.dart';
+import '../providers/expense_provider_new.dart';
+import '../providers/paid_reimbursement_provider.dart';
 import 'reimbursement_card.dart';
 
 class BalanceDetailModal extends ConsumerWidget {
@@ -322,7 +324,14 @@ class BalanceDetailModal extends ConsumerWidget {
                         
                         print('Remboursement marqué comme payé avec succès');
                         
-                        // Les providers sont automatiquement mis à jour grâce aux listeners
+                        // Rafraîchir les soldes
+                        ref.read(balancesStateProvider(eventId).notifier).refresh();
+                        
+                        // Rafraîchir les remboursements en attente
+                        ref.read(reimbursementProvider(eventId).notifier).calculateReimbursements();
+                        
+                        // Rafraîchir les remboursements payés
+                        ref.invalidate(paidReimbursementProvider(eventId));
                         
                         // Appeler le callback pour rafraîchir les données
                         if (onMarkAsPaid != null) {
@@ -330,7 +339,9 @@ class BalanceDetailModal extends ConsumerWidget {
                         }
                         
                         // Fermer le modal
-                        Navigator.of(context).pop();
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
                         
                         // Afficher un message de confirmation
                         ScaffoldMessenger.of(context).showSnackBar(

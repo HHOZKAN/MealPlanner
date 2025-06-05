@@ -19,6 +19,7 @@ class Event extends Model
         'date',
         'location',
         'type',
+        'emoji',
         'organizer_id',
         'status'
     ];

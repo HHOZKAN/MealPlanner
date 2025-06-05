@@ -82,4 +82,37 @@ class ReimbursementDatasource {
       throw Exception('Erreur lors du calcul des remboursements: ${response.body}');
     }
   }
+
+  Future<List<ReimbursementModel>> getPaidHistory(int eventId) async {
+    final token = await TokenStorage.getToken();
+    
+    print('Appel API getPaidHistory pour eventId: $eventId');
+    
+    final response = await client.get(
+      Uri.parse('${ApiConfig.baseUrl}/events/$eventId/reimbursements/paid-history'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('Réponse API getPaidHistory:');
+    print('Status: ${response.statusCode}');
+    print('Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('Data décodée: $data');
+      
+      final reimbursements = data['reimbursements'] as List;
+      print('Remboursements extraits: $reimbursements');
+      
+      final result = reimbursements.map((r) => ReimbursementModel.fromJson(r)).toList();
+      print('Remboursements convertis: ${result.length} éléments');
+      
+      return result;
+    } else {
+      throw Exception('Erreur lors de la récupération de l\'historique des remboursements: ${response.body}');
+    }
+  }
 }
