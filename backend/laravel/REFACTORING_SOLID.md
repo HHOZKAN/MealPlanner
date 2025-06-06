@@ -2,8 +2,7 @@
 
 ## Vue d'ensemble
 
-Cette refactorisation a été effectuée pour respecter les principes SOLID et améliorer la maintenabilité du code backend Laravel. Nous avons restructuré les contrôleurs monolithiques en services spécialisés avec injection de dépendances.
-
+Cette refactorisation a été effectuée pour respecter les principes SOLID et améliorer la maintenabilité du code backend Laravel. 
 ## Modules refactorisés
 
 ### 1. Événements (Events)
@@ -408,4 +407,3 @@ Cette refactorisation améliore :
 - **Lisibilité** : Responsabilités clairement séparées
 - **Réutilisabilité** : Services réutilisables dans d'autres contextes
 
-Le frontend nécessite des adaptations mineures, principalement au niveau des endpoints de réponse aux invitations et quelques nouveaux endpoints optionnels.

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../core/network/dio_client.dart';
 
 class ExpenseRepository {
@@ -6,13 +7,24 @@ class ExpenseRepository {
   ExpenseRepository(this._dioClient);
 
   Future<Map<String, dynamic>> createExpense(int eventId, Map<String, dynamic> expenseData) async {
+    print('ExpenseRepository - createExpense - Start');
+    print('EventId: $eventId');
+    print('ExpenseData: $expenseData');
+    
     try {
       final response = await _dioClient.post(
         '/events/$eventId/expenses',
         data: expenseData,
       );
+      print('ExpenseRepository - createExpense - Success Response: ${response.data}');
       return response.data;
     } catch (e) {
+      print('ExpenseRepository - createExpense - Error: $e');
+      if (e is DioException) {
+        print('Response data: ${e.response?.data}');
+        print('Response status: ${e.response?.statusCode}');
+        print('Request data: ${e.requestOptions.data}');
+      }
       throw Exception('Erreur lors de la création de la dépense: $e');
     }
   }

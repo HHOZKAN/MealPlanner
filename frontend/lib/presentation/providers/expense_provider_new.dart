@@ -85,8 +85,19 @@ final createExpenseProvider = Provider.family<Future<Map<String, dynamic>> Funct
   final notifier = ref.watch(expensesStateProvider(eventId).notifier);
   
   return (Map<String, dynamic> expenseData) async {
-    final result = await repository.createExpense(eventId, expenseData);
-    await notifier.loadExpenses(); // Recharger les dépenses après l'ajout
-    return result;
+    print('ExpenseProvider - createExpense - Start');
+    print('EventId: $eventId');
+    print('ExpenseData: $expenseData');
+    
+    try {
+      final result = await repository.createExpense(eventId, expenseData);
+      print('ExpenseProvider - createExpense - Success, reloading expenses');
+      await notifier.loadExpenses(); // Recharger les dépenses après l'ajout
+      print('ExpenseProvider - createExpense - Expenses reloaded');
+      return result;
+    } catch (e) {
+      print('ExpenseProvider - createExpense - Error: $e');
+      rethrow;
+    }
   };
 });
