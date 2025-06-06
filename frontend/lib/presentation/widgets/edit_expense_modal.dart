@@ -39,11 +39,10 @@ class _EditExpenseModalState extends ConsumerState<EditExpenseModal> {
     _selectedPayerId = widget.expense.payerId;
     
     // Initialiser les parts
-    widget.expense.shares.forEach((userId, amount) {
-      final userIdInt = int.parse(userId);
-      _selectedParticipants.add(userIdInt);
-      _shareControllers[userIdInt] = TextEditingController(text: amount.toString());
-    });
+    for (final share in widget.expense.shares) {
+      _selectedParticipants.add(share.userId);
+      _shareControllers[share.userId] = TextEditingController(text: share.amount.toString());
+    }
   }
 
   @override

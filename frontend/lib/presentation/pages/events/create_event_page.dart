@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../presentation/providers/event_provider.dart';
 import '../../../presentation/providers/event_share_link_provider.dart';
 import '../../widgets/participant_selector.dart';
@@ -198,22 +199,26 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
         
         // Show invite participants modal after event creation
         if (mounted) {
-        await showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => InviteParticipantsModal(
-            nicknames: _selectedNicknames,
-            invitationLink: shareableLink,
-            onInviteLater: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        );
-          Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Événement créé avec succès')),
+          await showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => InviteParticipantsModal(
+              nicknames: _selectedNicknames,
+              invitationLink: shareableLink,
+              onInviteLater: () {
+                Navigator.of(context).pop(); // Ferme seulement le modal
+              },
+            ),
           );
+          
+          // Naviguer vers le dashboard avec GoRouter
+          if (mounted) {
+            context.go('/');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Événement créé avec succès')),
+            );
+          }
         }
       } catch (e) {
         setState(() {

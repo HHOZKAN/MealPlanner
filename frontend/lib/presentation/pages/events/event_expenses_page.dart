@@ -265,10 +265,10 @@ class EventExpensesPage extends ConsumerWidget {
                                       fontSize: 16,
                                     ),
                                   ),
-                                  if (expense.shares.containsKey(currentUser?.id.toString())) ...[
+                              if (expense.shares.any((share) => share.userId == currentUser?.id)) ...[
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Votre part: ${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(expense.shares[currentUser!.id.toString()] ?? 0)}',
+                                      'Votre part: ${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(expense.shares.firstWhere((share) => share.userId == currentUser!.id).amount)}',
                                       style: TextStyle(
                                         color: const Color(0xFF2D3142).withOpacity(0.7),
                                         fontSize: 12,

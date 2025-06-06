@@ -20,6 +20,12 @@ class RepositoryServiceProvider extends ServiceProvider
 
         // Services
         $this->app->bind(InvitationServiceInterface::class, InvitationService::class);
+        $this->app->bind(\App\Contracts\Services\ParticipantServiceInterface::class, \App\Services\ParticipantService::class);
+        $this->app->bind(\App\Contracts\Services\IngredientServiceInterface::class, \App\Services\IngredientService::class);
+        $this->app->bind(\App\Contracts\Services\ExpenseServiceInterface::class, \App\Services\ExpenseService::class);
+        
+        // Reimbursement
+        $this->app->bind(\App\Repositories\ReimbursementRepositoryInterface::class, \App\Repositories\ReimbursementRepository::class);
     }
 
     /**

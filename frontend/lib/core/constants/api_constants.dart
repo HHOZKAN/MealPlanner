@@ -1,6 +1,7 @@
 class ApiConstants {
   // URL de base de l'API
-  static const String baseUrl = 'http://127.0.0.1:8001/api';
+  // Pour l'émulateur Android, utiliser 10.0.2.2 au lieu de 127.0.0.1
+  static const String baseUrl = 'http://10.0.2.2:8001/api';
   
   // Endpoints d'authentification
   static const String register = '/auth/register';
