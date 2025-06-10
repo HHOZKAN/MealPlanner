@@ -9,9 +9,9 @@ import 'core/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialiser les formats de date pour le français
-  await initializeDateFormatting('fr_FR', null);
-  Intl.defaultLocale = 'fr_FR';
+  // Initialize date formats for English
+  await initializeDateFormatting('en_US', null);
+  Intl.defaultLocale = 'en_US';
   
   runApp(
     const ProviderScope(
@@ -41,8 +41,8 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('fr', 'FR'),
         Locale('en', 'US'),
+        Locale('fr', 'FR'),
       ],
     );
   }

@@ -41,14 +41,7 @@ class Event extends Model
     public function ingredients()
     {
         return $this->hasMany(Ingredient::class);
-    }
-
-    public function payments()
-    {
-        return $this->hasMany(Payment::class);
-    }
-
-    public function getIsUpcomingAttribute()
+    }public function getIsUpcomingAttribute()
     {
         return $this->date->isFuture();
     }

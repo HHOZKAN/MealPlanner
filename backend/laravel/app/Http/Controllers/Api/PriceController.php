@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ManualPrice;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -33,10 +33,7 @@ class PriceController extends Controller
                 $validated['receipt_image'] = $path;
             }
 
-            $price = ManualPrice::create([
-                ...$validated,
-                'added_by' => Auth::id()
-            ]);
+            $price = 
 
             return $this->successResponse(
                 $price->load('user'),
@@ -58,11 +55,7 @@ class PriceController extends Controller
                 'product_name' => 'required|string'
             ]);
 
-            $prices = ManualPrice::where('product_name', 'like', '%' . $validated['product_name'] . '%')
-                ->with('user')
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->groupBy('store_name');
+            $prices = 
 
             $stats = [
                 'average' => $prices->flatten()->avg('price'),
@@ -91,17 +84,7 @@ class PriceController extends Controller
                 'product_name' => 'required|string'
             ]);
 
-            $stats = ManualPrice::where('product_name', 'like', '%' . $validated['product_name'] . '%')
-                ->get()
-                ->groupBy('store_name')
-                ->map(function ($prices) {
-                    return [
-                        'average' => $prices->avg('price'),
-                        'min' => $prices->min('price'),
-                        'max' => $prices->max('price'),
-                        'count' => $prices->count(),
-                        'last_update' => $prices->max('created_at')
-                    ];
+            $stats = 
                 });
 
             return $this->successResponse($stats, 'Statistiques récupérées avec succès');

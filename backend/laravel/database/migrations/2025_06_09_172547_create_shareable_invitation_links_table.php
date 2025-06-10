@@ -9,16 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('groups', function (Blueprint $table) {
+        Schema::create('shareable_invitation_links', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->foreignId('created_by')->constrained('users');
-            $table->boolean('is_active')->default(true);
+            $table->foreignId('event_id')->constrained()->onDelete('cascade');
+            $table->string('token', 64)->unique();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('groups');
+        Schema::dropIfExists('shareable_invitation_links');
     }
 };

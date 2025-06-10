@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import './common/modal_widgets.dart';
+import '../../core/theme/app_theme.dart';
 
 class ParticipantSelector extends ConsumerStatefulWidget {
   final List<String> selectedNicknames;
@@ -36,10 +38,12 @@ class _ParticipantSelectorState extends ConsumerState<ParticipantSelector> {
     super.dispose();
   }
 
+  /// Valide si le pseudo respecte les critères
   bool _isValidNickname(String nickname) {
     return nickname.length >= 2 && nickname.length <= 30;
   }
 
+  /// Ajoute un nouveau participant
   void _addNickname() {
     if (_formKey.currentState!.validate()) {
       final nickname = _nicknameController.text.trim();
@@ -50,16 +54,12 @@ class _ParticipantSelectorState extends ConsumerState<ParticipantSelector> {
         });
         widget.onParticipantsChanged(_nicknames);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ce pseudo est déjà ajouté'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        _showErrorSnackBar('Ce pseudo est déjà ajouté');
       }
     }
   }
 
+  /// Supprime un participant
   void _removeNickname(String nickname) {
     setState(() {
       _nicknames.remove(nickname);
@@ -67,84 +67,33 @@ class _ParticipantSelectorState extends ConsumerState<ParticipantSelector> {
     widget.onParticipantsChanged(_nicknames);
   }
 
+  /// Affiche un message d'erreur
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.errorColor,
+      ),
+    );
+  }
+
+  /// Affiche la boîte de dialogue pour ajouter un participant
   void _showAddParticipantDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Ajouter un participant',
-          style: TextStyle(
-            color: Color(0xFF2D3142),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nicknameController,
-                keyboardType: TextInputType.name,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(
-                  labelText: 'Prénom ou pseudo',
-                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
-                  hintText: 'Ex: Jean, Marie, Alex...',
-                  prefixIcon: const Icon(Icons.person, color: Color(0xFFFF5722)),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFFF5722)),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un prénom ou pseudo';
-                  }
-                  if (!_isValidNickname(value)) {
-                    return 'Le prénom doit faire entre 2 et 30 caractères';
-                  }
-                  return null;
-                },
-                onFieldSubmitted: (_) => _addNickname(),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _nicknameController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Annuler',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _addNickname();
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF5722),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Ajouter',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+      builder: (context) => _AddParticipantDialog(
+        formKey: _formKey,
+        controller: _nicknameController,
+        onAdd: _addNickname,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Veuillez entrer un prénom ou pseudo';
+          }
+          if (!_isValidNickname(value)) {
+            return 'Le prénom doit faire entre 2 et 30 caractères';
+          }
+          return null;
+        },
       ),
     );
   }
@@ -153,180 +102,337 @@ class _ParticipantSelectorState extends ConsumerState<ParticipantSelector> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-            spreadRadius: 0.5,
-          ),
-        ],
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTheme.spacingM),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title ?? 'Participants',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2D3142),
-                      ),
-                    ),
-                    if (widget.subtitle != null)
-                      Text(
-                        widget.subtitle!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                  ],
-                ),
-                IconButton(
-                  onPressed: _showAddParticipantDialog,
-                  icon: const Icon(
-                    Icons.person_add,
-                    color: Color(0xFFFF5722),
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF5722).withOpacity(0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
+            // Header avec titre et bouton d'ajout
+            _ParticipantSelectorHeader(
+              title: widget.title ?? 'Participants',
+              subtitle: widget.subtitle,
+              onAddPressed: _showAddParticipantDialog,
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.spacingM),
             
-            // Participants list
-            if (_nicknames.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey.withOpacity(0.2),
-                    style: BorderStyle.solid,
+            // Liste des participants ou état vide
+            _nicknames.isEmpty
+                ? const _EmptyParticipantsState()
+                : _ParticipantsList(
+                    nicknames: _nicknames,
+                    onRemove: _removeNickname,
                   ),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 48,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Aucun participant ajouté',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Appuyez sur + pour ajouter des participants',
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              Column(
-                children: _nicknames.map((nickname) => Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF5722).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFFFF5722).withOpacity(0.2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF5722),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Center(
-                          child: Text(
-                            nickname[0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          nickname,
-                          style: const TextStyle(
-                            color: Color(0xFF2D3142),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => _removeNickname(nickname),
-                        icon: const Icon(
-                          Icons.close,
-                          size: 18,
-                          color: Color(0xFFFF5722),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ],
-                  ),
-                )).toList(),
-              ),
             
-            // Summary
+            // Résumé du nombre de participants
             if (_nicknames.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  '${_nicknames.length} participant${_nicknames.length > 1 ? 's' : ''} ajouté${_nicknames.length > 1 ? 's' : ''}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
-                  ),
+              _ParticipantsSummary(count: _nicknames.length),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget pour l'en-tête du sélecteur de participants
+class _ParticipantSelectorHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final VoidCallback onAddPressed;
+
+  const _ParticipantSelectorHeader({
+    Key? key,
+    required this.title,
+    this.subtitle,
+    required this.onAddPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: AppTheme.fontSizeM,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textColor,
+              ),
+            ),
+            if (subtitle != null)
+              Text(
+                subtitle!,
+                style: TextStyle(
+                  fontSize: AppTheme.fontSizeS,
+                  color: AppTheme.textColor.withOpacity(0.6),
                 ),
               ),
           ],
         ),
+        IconButton(
+          onPressed: onAddPressed,
+          icon: const Icon(
+            Icons.person_add,
+            color: AppTheme.primaryColor,
+          ),
+          style: IconButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusS),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Widget pour l'état vide (aucun participant)
+class _EmptyParticipantsState extends StatelessWidget {
+  const _EmptyParticipantsState({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingL),
+      decoration: BoxDecoration(
+        color: AppTheme.backgroundColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        border: Border.all(
+          color: AppTheme.textColor.withOpacity(0.2),
+        ),
       ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.people_outline,
+            size: 48,
+            color: AppTheme.textColor.withOpacity(0.4),
+          ),
+          const SizedBox(height: AppTheme.spacingS),
+          Text(
+            'Aucun participant ajouté',
+            style: TextStyle(
+              color: AppTheme.textColor.withOpacity(0.6),
+              fontSize: AppTheme.fontSizeS,
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingXS),
+          Text(
+            'Appuyez sur + pour ajouter des participants',
+            style: TextStyle(
+              color: AppTheme.textColor.withOpacity(0.5),
+              fontSize: AppTheme.fontSizeS - 2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Widget pour la liste des participants
+class _ParticipantsList extends StatelessWidget {
+  final List<String> nicknames;
+  final Function(String) onRemove;
+
+  const _ParticipantsList({
+    Key? key,
+    required this.nicknames,
+    required this.onRemove,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: nicknames.map((nickname) => 
+        _ParticipantItem(
+          nickname: nickname,
+          onRemove: () => onRemove(nickname),
+        ),
+      ).toList(),
+    );
+  }
+}
+
+/// Widget pour un élément participant individuel
+class _ParticipantItem extends StatelessWidget {
+  final String nickname;
+  final VoidCallback onRemove;
+
+  const _ParticipantItem({
+    Key? key,
+    required this.nickname,
+    required this.onRemove,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingM,
+        vertical: AppTheme.spacingS,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+        border: Border.all(
+          color: AppTheme.primaryColor.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Avatar avec initiale
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Text(
+                nickname[0].toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: AppTheme.fontSizeS,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingM),
+          
+          // Nom du participant
+          Expanded(
+            child: Text(
+              nickname,
+              style: const TextStyle(
+                color: AppTheme.textColor,
+                fontSize: AppTheme.fontSizeS,
+              ),
+            ),
+          ),
+          
+          // Bouton de suppression
+          IconButton(
+            onPressed: onRemove,
+            icon: const Icon(
+              Icons.close,
+              size: 18,
+              color: AppTheme.primaryColor,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 32,
+              minHeight: 32,
+            ),
+            padding: EdgeInsets.zero,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Widget pour le résumé du nombre de participants
+class _ParticipantsSummary extends StatelessWidget {
+  final int count;
+
+  const _ParticipantsSummary({
+    Key? key,
+    required this.count,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppTheme.spacingS),
+      child: Text(
+        '$count participant${count > 1 ? 's' : ''} ajouté${count > 1 ? 's' : ''}',
+        style: TextStyle(
+          fontSize: AppTheme.fontSizeS - 2,
+          color: AppTheme.textColor.withOpacity(0.6),
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog pour ajouter un participant
+class _AddParticipantDialog extends StatelessWidget {
+  final GlobalKey<FormState> formKey;
+  final TextEditingController controller;
+  final VoidCallback onAdd;
+  final String? Function(String?) validator;
+
+  const _AddParticipantDialog({
+    Key? key,
+    required this.formKey,
+    required this.controller,
+    required this.onAdd,
+    required this.validator,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppTheme.cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+      ),
+      title: const Text(
+        'Ajouter un participant',
+        style: TextStyle(
+          color: AppTheme.textColor,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            StyledTextField(
+              controller: controller,
+              hintText: 'Ex: Jean, Marie, Alex...',
+              prefixIcon: Icons.person,
+              validator: validator,
+              onChanged: (_) {}, // Requis par StyledTextField
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            controller.clear();
+            Navigator.pop(context);
+          },
+          child: Text(
+            'Annuler',
+            style: TextStyle(color: AppTheme.textColor.withOpacity(0.6)),
+          ),
+        ),
+        PrimaryButton(
+          text: 'Ajouter',
+          onPressed: () {
+            onAdd();
+            Navigator.pop(context);
+          },
+          height: 40,
+        ),
+      ],
     );
   }
 }

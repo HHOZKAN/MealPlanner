@@ -1,66 +1,153 @@
 import 'package:dio/dio.dart';
 import '../../core/network/dio_client.dart';
+import '../../core/constants/api_constants.dart';
 
+/// Repository pour la gestion des dépenses
 class ExpenseRepository {
   final DioClient _dioClient;
 
   ExpenseRepository(this._dioClient);
 
+  /// Crée une nouvelle dépense pour un événement
   Future<Map<String, dynamic>> createExpense(int eventId, Map<String, dynamic> expenseData) async {
-    print('ExpenseRepository - createExpense - Start');
-    print('EventId: $eventId');
-    print('ExpenseData: $expenseData');
-    
     try {
       final response = await _dioClient.post(
-        '/events/$eventId/expenses',
+        ApiConstants.eventExpenses.replaceAll('{id}', eventId.toString()),
         data: expenseData,
       );
-      print('ExpenseRepository - createExpense - Success Response: ${response.data}');
-      return response.data;
+      
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+      
+      throw Exception('Format de réponse invalide');
     } catch (e) {
-      print('ExpenseRepository - createExpense - Error: $e');
       if (e is DioException) {
-        print('Response data: ${e.response?.data}');
-        print('Response status: ${e.response?.statusCode}');
-        print('Request data: ${e.requestOptions.data}');
+        final statusCode = e.response?.statusCode;
+        final errorMessage = e.response?.data?['message'] ?? 'Erreur réseau';
+        
+        switch (statusCode) {
+          case 400:
+            throw Exception('Données invalides: $errorMessage');
+          case 401:
+            throw Exception('Non autorisé');
+          case 403:
+            throw Exception('Accès refusé');
+          case 404:
+            throw Exception('Événement non trouvé');
+          case 422:
+            throw Exception('Erreur de validation: $errorMessage');
+          default:
+            throw Exception('Erreur serveur: $errorMessage');
+        }
       }
       throw Exception('Erreur lors de la création de la dépense: $e');
     }
   }
 
+  /// Récupère toutes les dépenses d'un événement
   Future<List<Map<String, dynamic>>> getExpenses(int eventId) async {
     try {
-      final response = await _dioClient.get('/events/$eventId/expenses');
+      final response = await _dioClient.get(
+        ApiConstants.eventExpenses.replaceAll('{id}', eventId.toString())
+      );
+      
       if (response.data['status'] == 'success') {
-        return List<Map<String, dynamic>>.from(response.data['data']);
+        final data = response.data['data'];
+        if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
       }
-      throw Exception(response.data['message'] ?? 'Erreur inconnue');
+      
+      throw Exception(response.data['message'] ?? 'Format de réponse invalide');
     } catch (e) {
+      if (e is DioException) {
+        final statusCode = e.response?.statusCode;
+        final errorMessage = e.response?.data?['message'] ?? 'Erreur réseau';
+        
+        switch (statusCode) {
+          case 401:
+            throw Exception('Non autorisé');
+          case 403:
+            throw Exception('Accès refusé');
+          case 404:
+            throw Exception('Événement non trouvé');
+          default:
+            throw Exception('Erreur serveur: $errorMessage');
+        }
+      }
       throw Exception('Erreur lors de la récupération des dépenses: $e');
     }
   }
 
+  /// Met à jour une dépense existante
   Future<Map<String, dynamic>> updateExpense(int eventId, int expenseId, Map<String, dynamic> expenseData) async {
     try {
       final response = await _dioClient.put(
-        '/events/$eventId/expenses/$expenseId',
+        '${ApiConstants.eventExpenses.replaceAll('{id}', eventId.toString())}/$expenseId',
         data: expenseData,
       );
-      return response.data;
+      
+      if (response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+      
+      throw Exception('Format de réponse invalide');
     } catch (e) {
+      if (e is DioException) {
+        final statusCode = e.response?.statusCode;
+        final errorMessage = e.response?.data?['message'] ?? 'Erreur réseau';
+        
+        switch (statusCode) {
+          case 400:
+            throw Exception('Données invalides: $errorMessage');
+          case 401:
+            throw Exception('Non autorisé');
+          case 403:
+            throw Exception('Accès refusé');
+          case 404:
+            throw Exception('Dépense non trouvée');
+          case 422:
+            throw Exception('Erreur de validation: $errorMessage');
+          default:
+            throw Exception('Erreur serveur: $errorMessage');
+        }
+      }
       throw Exception('Erreur lors de la modification de la dépense: $e');
     }
   }
 
+  /// Récupère les soldes des participants pour un événement
   Future<Map<String, dynamic>> getBalances(int eventId) async {
     try {
-      final response = await _dioClient.get('/events/$eventId/expenses/balances');
+      final response = await _dioClient.get(
+        '${ApiConstants.eventExpenses.replaceAll('{id}', eventId.toString())}/balances'
+      );
+      
       if (response.data['status'] == 'success') {
-        return Map<String, dynamic>.from(response.data['data']);
+        final data = response.data['data'];
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
       }
-      throw Exception(response.data['message'] ?? 'Erreur inconnue');
+      
+      throw Exception(response.data['message'] ?? 'Format de réponse invalide');
     } catch (e) {
+      if (e is DioException) {
+        final statusCode = e.response?.statusCode;
+        final errorMessage = e.response?.data?['message'] ?? 'Erreur réseau';
+        
+        switch (statusCode) {
+          case 401:
+            throw Exception('Non autorisé');
+          case 403:
+            throw Exception('Accès refusé');
+          case 404:
+            throw Exception('Événement non trouvé');
+          default:
+            throw Exception('Erreur serveur: $errorMessage');
+        }
+      }
       throw Exception('Erreur lors de la récupération des soldes: $e');
     }
   }

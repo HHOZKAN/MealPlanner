@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../core/network/dio_client.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../presentation/providers/event_provider.dart';
 import '../../../presentation/providers/event_participants_provider.dart';
+import '../../../presentation/providers/auth_provider.dart';
 
 class JoinEventByLinkModal extends ConsumerStatefulWidget {
   final VoidCallback onCancel;
@@ -33,7 +35,7 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
     if (link.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Veuillez entrer un lien valide'),
+          content: Text('Please enter a valid link'),
           backgroundColor: Color(0xFFFF5722),
         ),
       );
@@ -49,19 +51,19 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
       Uri uri = Uri.parse(link);
       String? token = uri.queryParameters['token'];
       if (token == null || token.isEmpty) {
-        throw Exception('Lien invalide: token manquant');
+        throw Exception('Invalid link: missing token');
       }
 
-      final dioClient = DioClient();
+      final dioClient = ref.read(dioClientProvider);
       final response = await dioClient.post(
-        '/events/participants/accept-invitation',
+        ApiConstants.eventParticipantAcceptInvitation,
         data: {'token': token},
       );
 
         if (response.statusCode == 200) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Invitation acceptée avec succès'),
+              content: Text('Invitation accepted successfully'),
               backgroundColor: Color(0xFF4CAF50),
             ),
           );
@@ -83,7 +85,7 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
           Navigator.of(context).pop();
         }
     } on DioException catch (e) {
-      String errorMessage = e.response?.data?['message'] ?? 'Erreur lors de l\'acceptation de l\'invitation';
+      String errorMessage = e.response?.data?['message'] ?? 'Error accepting invitation';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -93,7 +95,7 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erreur: ${e.toString()}'),
+          content: Text('Error: ${e.toString()}'),
           backgroundColor: Color(0xFFFF5722),
         ),
       );
@@ -159,7 +161,7 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Rejoins un tricount',
+                      'Join a tricount',
                       style: TextStyle(
                         fontSize: 20, 
                         fontWeight: FontWeight.bold,
@@ -168,9 +170,9 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Demande aux autres participants le lien de l\'evenement que tu souhaites rejoindre. Ensuite, '
-                      'clique simplement sur ce lien.\n\n'
-                      'Si tu préfères, tu peux aussi le copier-coller dans cette case.',
+                      'Ask other participants for the link to the event you want to join. Then, '
+                      'simply click on that link.\n\n'
+                      'If you prefer, you can also copy and paste it in this field.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -187,7 +189,7 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
                     child: TextField(
                       controller: _linkController,
                       decoration: InputDecoration(
-                        hintText: 'Colle le lien ici',
+                        hintText: 'Paste the link here',
                         hintStyle: TextStyle(
                           color: const Color(0xFF2D3142).withOpacity(0.5),
                         ),
@@ -257,7 +259,7 @@ class _JoinEventByLinkModalState extends ConsumerState<JoinEventByLinkModal> {
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          'Rejoindre',
+                          'Join',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

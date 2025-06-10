@@ -14,16 +14,16 @@ class DioClient {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
+      // Add these options for web platform
+      validateStatus: (status) => true, // Accept all status codes
+      followRedirects: false,
     ));
     
-    _setupInterceptors();
-  }
-  
-  Future<void> _setupInterceptors() async {
+    // Initialize interceptors immediately
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Ajouter le token d'authentification si disponible
+          // Add authentication token if available
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString('auth_token');
           if (token != null) {
@@ -36,11 +36,8 @@ class DioClient {
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            // Gérer l'expiration du token
             final prefs = await SharedPreferences.getInstance();
             await prefs.remove('auth_token');
-            // Rediriger vers la page de connexion
-            // Vous devrez implémenter cette logique
           }
           return handler.next(e);
         },

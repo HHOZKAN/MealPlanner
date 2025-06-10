@@ -6,18 +6,18 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'event_provider.dart';
 
-// Provider pour le client Dio
+// Provider for Dio client
 final dioClientProvider = Provider<DioClient>((ref) {
   return DioClient();
 });
 
-// Provider pour le repository d'authentification
+// Provider for authentication repository
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final dioClient = ref.watch(dioClientProvider);
   return AuthRepository(dioClient);
 });
 
-// États possibles de l'authentification
+// Possible authentication states
 enum AuthState {
   initial,
   loading,
@@ -26,7 +26,7 @@ enum AuthState {
   error,
 }
 
-// État de l'authentification
+// Authentication state
 class AuthStateNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
   final Ref _ref;
@@ -50,8 +50,8 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
           _user = await _authRepository.getCurrentUser();
           state = AuthState.authenticated;
         } catch (e) {
-          print('Erreur lors de la récupération de l\'utilisateur: $e');
-          _errorMessage = "Session expirée, veuillez vous reconnecter";
+          print('Error retrieving user: $e');
+          _errorMessage = "Session expired, please login again";
           _user = null;
           await _clearToken();
           state = AuthState.unauthenticated;
@@ -61,7 +61,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         state = AuthState.unauthenticated;
       }
     } catch (e) {
-      print('Erreur lors de la vérification du statut d\'authentification: $e');
+      print('Error checking authentication status: $e');
       _errorMessage = e.toString();
       _user = null;
       state = AuthState.unauthenticated;
@@ -88,9 +88,9 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
         eventId: eventId,
         token: token,
       );
-      // L'appel à acceptInvitation est géré côté backend lors de l'inscription avec token
+      // acceptInvitation call is handled on the backend during registration with token
       if (token != null && token.isNotEmpty) {
-        // Rafraîchir la liste des événements après inscription avec token
+        // Refresh events list after registration with token
         final eventsNotifier = _ref.read(eventsStateProvider.notifier);
         await eventsNotifier.loadEvents();
       }
@@ -115,7 +115,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       _errorMessage = null; // Clear any previous error
       state = AuthState.authenticated;
     } catch (e) {
-      print('Erreur lors de la connexion: $e');
+      print('Error during login: $e');
       _errorMessage = e.toString();
       _user = null;
       state = AuthState.unauthenticated;
@@ -128,7 +128,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       await _authRepository.logout();
       _user = null;
     } catch (e) {
-      print('Erreur lors de la déconnexion: $e');
+      print('Error during logout: $e');
       _errorMessage = e.toString();
     } finally {
       await _clearToken();
@@ -142,13 +142,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 }
 
-// Provider pour l'état d'authentification
+// Provider for authentication state
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return AuthStateNotifier(authRepository, ref);
 });
 
-// Provider pour l'utilisateur courant
+// Provider for current user
 final currentUserProvider = Provider<UserModel?>((ref) {
   final authNotifier = ref.watch(authStateProvider.notifier);
   return authNotifier.user;

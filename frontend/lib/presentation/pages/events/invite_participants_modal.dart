@@ -18,7 +18,7 @@ class InviteParticipantsModal extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: invitationLink));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Lien d\'invitation copié dans le presse-papiers'),
+        content: Text('Invitation link copied to clipboard'),
         backgroundColor: Color(0xFFFF5722),
       ),
     );
@@ -64,7 +64,7 @@ class InviteParticipantsModal extends StatelessWidget {
                     const Icon(Icons.check_circle, color: Color(0xFFFF5722), size: 64),
                     const SizedBox(height: 12),
                     const Text(
-                      'Ton tricount est prêt à être utilisé !',
+                      'Your tricount is ready to use!',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -73,7 +73,7 @@ class InviteParticipantsModal extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Invite tous les participants en leur envoyant un message avec le lien d\'invitation ou montre-leur un QR d\'invitation.',
+                      'Invite all participants by sending them a message with the invitation link or show them an invitation QR code.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -85,7 +85,7 @@ class InviteParticipantsModal extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'Participants à inviter',
+                'Participants to invite',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
@@ -123,7 +123,7 @@ class InviteParticipantsModal extends StatelessWidget {
                   onPressed: () => _shareLink(context),
                   icon: const Icon(Icons.share),
                   label: const Text(
-                    'Copier le lien',
+                    'Copy link',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -148,7 +148,7 @@ class InviteParticipantsModal extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                child: const Text('Inviter plus tard'),
+                child: const Text('Invite later'),
               ),
             ],
           ),

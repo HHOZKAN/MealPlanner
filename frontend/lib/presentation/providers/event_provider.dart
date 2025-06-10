@@ -29,13 +29,19 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
   String? get errorMessage => _errorMessage;
   
   Future<void> loadEvents() async {
+    if (state == EventsState.loading) return; // Prevent multiple simultaneous loads
+    
     try {
       state = EventsState.loading;
       _events = await _eventRepository.getEvents();
-      state = EventsState.loaded;
+      if (mounted) {
+        state = EventsState.loaded;
+      }
     } catch (e) {
       _errorMessage = e.toString();
-      state = EventsState.error;
+      if (mounted) {
+        state = EventsState.error;
+      }
     }
   }
   
@@ -47,6 +53,8 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
     required String type,
     String? emoji,
   }) async {
+    if (state == EventsState.loading) throw Exception('Operation in progress');
+    
     try {
       state = EventsState.loading;
       final event = await _eventRepository.createEvent(
@@ -57,12 +65,16 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
         type: type,
         emoji: emoji,
       );
-      _events = [event, ..._events];
-      state = EventsState.loaded;
+      if (mounted) {
+        _events = [event, ..._events];
+        state = EventsState.loaded;
+      }
       return event;
     } catch (e) {
       _errorMessage = e.toString();
-      state = EventsState.error;
+      if (mounted) {
+        state = EventsState.error;
+      }
       rethrow;
     }
   }
@@ -76,6 +88,8 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
     String? type,
     String? status,
   }) async {
+    if (state == EventsState.loading) return;
+    
     try {
       state = EventsState.loading;
       final updatedEvent = await _eventRepository.updateEvent(
@@ -87,28 +101,38 @@ class EventsStateNotifier extends StateNotifier<EventsState> {
         type: type,
         status: status,
       );
-      _events = _events.map((event) {
-        if (event.id == id) {
-          return updatedEvent;
-        }
-        return event;
-      }).toList();
-      state = EventsState.loaded;
+      if (mounted) {
+        _events = _events.map((event) {
+          if (event.id == id) {
+            return updatedEvent;
+          }
+          return event;
+        }).toList();
+        state = EventsState.loaded;
+      }
     } catch (e) {
       _errorMessage = e.toString();
-      state = EventsState.error;
+      if (mounted) {
+        state = EventsState.error;
+      }
     }
   }
   
   Future<void> deleteEvent(int id) async {
+    if (state == EventsState.loading) return;
+    
     try {
       state = EventsState.loading;
       await _eventRepository.deleteEvent(id);
-      _events = _events.where((event) => event.id != id).toList();
-      state = EventsState.loaded;
+      if (mounted) {
+        _events = _events.where((event) => event.id != id).toList();
+        state = EventsState.loaded;
+      }
     } catch (e) {
       _errorMessage = e.toString();
-      state = EventsState.error;
+      if (mounted) {
+        state = EventsState.error;
+      }
     }
   }
 }

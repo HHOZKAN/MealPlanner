@@ -77,27 +77,27 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Veuillez entrer votre nom';
+      return 'Please enter your name';
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Veuillez entrer votre email';
+      return 'Please enter your email';
     }
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Veuillez entrer un email valide';
+      return 'Please enter a valid email';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Veuillez entrer un mot de passe';
+      return 'Please enter a password';
     }
     if (value.length < 8) {
-      return 'Le mot de passe doit contenir au moins 8 caractères';
+      return 'Password must contain at least 8 characters';
     }
     bool hasUppercase = value.contains(RegExp(r'[A-Z]'));
     bool hasLowercase = value.contains(RegExp(r'[a-z]'));
@@ -106,17 +106,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
 
     if (!(hasUppercase && hasLowercase && hasDigits && hasSpecialCharacters)) {
-      return 'Le mot de passe doit contenir des majuscules, minuscules, chiffres et symboles';
+      return 'Password must contain uppercase, lowercase, numbers and symbols';
     }
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Veuillez confirmer votre mot de passe';
+      return 'Please confirm your password';
     }
     if (value != _passwordController.text) {
-      return 'Les mots de passe ne correspondent pas';
+      return 'Passwords do not match';
     }
     return null;
   }

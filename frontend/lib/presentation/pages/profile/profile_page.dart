@@ -65,7 +65,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profil mis à jour avec succès')),
+            const SnackBar(content: Text('Profile updated successfully')),
           );
         }
       } catch (e) {
@@ -90,7 +90,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (user == null) {
       return const Scaffold(
         body: Center(
-          child: Text('Utilisateur non connecté'),
+          child: Text('User not logged in'),
         ),
       );
     }
@@ -105,7 +105,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             context.go('/');
           },
         ),
-        title: const Text('Profil'),
+        title: const Text('Profile'),
         backgroundColor: const Color(0xFFFAF7F2),
         elevation: 0,
         foregroundColor: Colors.black,
@@ -162,13 +162,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'Nom complet',
+                      labelText: 'Full Name',
                       prefixIcon: Icon(Icons.person),
                       floatingLabelStyle: TextStyle(color: Color(0xFFEF6C00)), // <-- couleur du label flottant
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer votre nom';
+                        return 'Please enter your name';
                       }
                       return null;
                     },
@@ -177,7 +177,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   TextFormField(
                     controller: _phoneController,
                     decoration: const InputDecoration(
-                      labelText: 'Téléphone (optionnel)',
+                      labelText: 'Phone (optional)',
                       prefixIcon: Icon(Icons.phone),
                       floatingLabelStyle: TextStyle(color: Color(0xFFEF6C00)), // <-- couleur du label flottant
                     ),
@@ -195,7 +195,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('Mettre à jour le profil'),
+                          : const Text('Update Profile'),
                     ),
                   ),
                 ],
@@ -207,7 +207,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 // Naviguer vers la page de changement de mot de passe
               },
               icon: const Icon(Icons.lock),
-              label: const Text('Changer le mot de passe'),
+              label: const Text('Change Password'),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
                 foregroundColor: Colors.black,
@@ -219,16 +219,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Déconnexion'),
-                    content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+                    title: const Text('Logout'),
+                    content: const Text('Are you sure you want to logout?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Annuler'),
+                        child: const Text('Cancel'),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Déconnexion'),
+                        child: const Text('Logout'),
                       ),
                     ],
                   ),
@@ -238,7 +238,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 }
               },
               icon: const Icon(Icons.logout, color: Colors.red),
-              label: const Text('Déconnexion', style: TextStyle(color: Colors.red)),
+              label: const Text('Logout', style: TextStyle(color: Colors.red)),
               style: TextButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
               ),

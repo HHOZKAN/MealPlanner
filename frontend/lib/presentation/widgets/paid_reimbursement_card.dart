@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../data/models/reimbursement_model.dart';
+import './common/reimbursement_widgets.dart';
+import '../../core/theme/app_theme.dart';
 
 class PaidReimbursementCard extends StatelessWidget {
   final ReimbursementModel reimbursement;
@@ -17,96 +18,55 @@ class PaidReimbursementCard extends StatelessWidget {
     final isFromCurrentUser = reimbursement.fromUserId == currentUserId;
     final isToCurrentUser = reimbursement.toUserId == currentUserId;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return BaseReimbursementCard(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingM,
+        vertical: AppTheme.spacingS,
       ),
-      color: Colors.white,
-      elevation: 2,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: Colors.green,
-          child: const Icon(
-            Icons.check_circle,
-            color: Colors.white,
-          ),
-        ),
-        title: Text(
+        contentPadding: EdgeInsets.zero,
+        leading: const PaidStatusAvatar(),
+        title: const Text(
           'Remboursement',
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3142),
+            color: AppTheme.textColor,
+            fontSize: AppTheme.fontSizeM,
           ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isFromCurrentUser) ...[
-              Text(
-                'Vous avez remboursé ${reimbursement.toUserName}',
-                style: TextStyle(
-                  color: const Color(0xFF2D3142).withOpacity(0.7),
-                ),
+            // Description principale
+            ReimbursementDescription(
+              description: ReimbursementDescriptionHelper.getPaidDescription(
+                isFromCurrentUser: isFromCurrentUser,
+                isToCurrentUser: isToCurrentUser,
+                fromUserName: reimbursement.fromUserName,
+                toUserName: reimbursement.toUserName,
               ),
-            ] else if (isToCurrentUser) ...[
-              Text(
-                '${reimbursement.fromUserName} vous a remboursé',
-                style: TextStyle(
-                  color: const Color(0xFF2D3142).withOpacity(0.7),
-                ),
-              ),
-            ] else ...[
-              Text(
-                '${reimbursement.fromUserName} a remboursé ${reimbursement.toUserName}',
-                style: TextStyle(
-                  color: const Color(0xFF2D3142).withOpacity(0.7),
-                ),
-              ),
-            ],
+            ),
+            
+            // Date de paiement si disponible
             if (reimbursement.paidAt != null) ...[
               const SizedBox(height: 2),
               Text(
-                'Payé le ${DateFormat('dd/MM/yyyy à HH:mm').format(reimbursement.paidAt!)}',
+                ReimbursementDescriptionHelper.getPaidDateDescription(
+                  reimbursement.paidAt!,
+                ),
                 style: TextStyle(
-                  color: const Color(0xFF2D3142).withOpacity(0.5),
-                  fontSize: 12,
+                  color: AppTheme.textColor.withOpacity(0.5),
+                  fontSize: AppTheme.fontSizeS - 2,
                 ),
               ),
             ],
           ],
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              NumberFormat.currency(locale: 'fr_FR', symbol: '€')
-                  .format(reimbursement.amount),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'Payé',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
+        trailing: AmountWithBadge(
+          amount: reimbursement.amount,
+          badgeText: 'Payé',
+          badgeColor: AppTheme.successColor,
         ),
       ),
     );

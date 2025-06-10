@@ -78,14 +78,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final eventsState = ref.watch(eventsStateProvider);
     final colorScheme = mealPlannerTheme.colorScheme;
 
-    return Theme(
-      data: mealPlannerTheme,
-      child: Scaffold(
-        backgroundColor: colorScheme.surface,
-        appBar: _buildAppBar(colorScheme),
-        body: _buildMainContent(eventsState, context),
-        bottomNavigationBar: _buildBottomNavigationBar(colorScheme),
-      ),
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: _buildAppBar(colorScheme),
+      body: _buildMainContent(eventsState, context),
+      bottomNavigationBar: _buildBottomNavigationBar(colorScheme),
     );
   }
 
@@ -116,7 +113,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ),
             child: IconButton(
               icon: const Icon(Icons.refresh),
-              tooltip: 'Rafraîchir',
+              tooltip: 'Refresh',
               color: colorScheme.primary,
               onPressed: () => ref.read(eventsStateProvider.notifier).loadEvents(),
             ),
@@ -135,7 +132,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 _showAddEventModal(context);
               },
               icon: const Icon(Icons.add),
-              tooltip: 'Ajouter un repas',
+              tooltip: 'Add a meal',
             ),
           ),
         ),
@@ -267,7 +264,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Erreur: ${ref.read(eventsStateProvider.notifier).errorMessage}',
+              'Error: ${ref.read(eventsStateProvider.notifier).errorMessage}',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colorScheme.error,
@@ -287,7 +284,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ),
               ),
               child: const Text(
-                'Réessayer',
+                'Retry',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
@@ -388,7 +385,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     const Expanded(
                       child: Center(
                         child: Text(
-                          'Ajouter',
+                          'Add',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -424,7 +421,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     child: const Icon(Icons.add, color: Color(0xFFFF5722)), // Harmonisé
                   ),
                   title: const Text(
-                    'Créer un nouveau évènement',
+                    'Create a new event',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -432,7 +429,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                   ),
                   subtitle: Text(
-                    'Commence un nouveau évènement de zéro.',
+                    'Start a new event from scratch.',
                     style: TextStyle(
                       fontSize: 14,
                       color: const Color(0xFF2D3142).withOpacity(0.7),
@@ -469,7 +466,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     child: const Icon(Icons.link, color: Color(0xFFFF5722)), // Harmonisé
                   ),
                   title: const Text(
-                    'Rejoins un évènement existant',
+                    'Join an existing event',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -477,7 +474,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                   ),
                   subtitle: Text(
-                    "Utilise un lien d'invitation pour rejoindre un évènement existant.",
+                    "Use an invitation link to join an existing event.",
                     style: TextStyle(
                       fontSize: 14,
                       color: const Color(0xFF2D3142).withOpacity(0.7),

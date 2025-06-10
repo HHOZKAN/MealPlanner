@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meal_planner/presentation/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
+import '../../core/constants/api_constants.dart';
 
 final eventShareLinkProvider = FutureProvider.family<String, int>((ref, eventId) async {
   final dioClient = ref.watch(dioClientProvider);
   try {
-    final response = await dioClient.get('/events/$eventId/participants/share-link');
+    final response = await dioClient.get(
+      ApiConstants.eventParticipantShareLink.replaceAll('{id}', eventId.toString())
+    );
     final data = response.data;
     if (data['status'] == 'success') {
       return data['data']['shareable_link'] as String;

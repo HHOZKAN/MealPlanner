@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/event_model.dart';
-import '../../../presentation/providers/event_provider.dart';
+import '../../widgets/common/event_form_widgets.dart';
+import '../../utils/event_form_validators.dart';
+import './edit_event_logic.dart';
+import '../../../core/theme/app_theme.dart';
 
 class EditEventPage extends ConsumerStatefulWidget {
   final EventModel event;
@@ -17,38 +20,11 @@ class EditEventPage extends ConsumerStatefulWidget {
 }
 
 class _EditEventPageState extends ConsumerState<EditEventPage> {
+  late final EditEventLogic _logic;
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _titleController;
-  late TextEditingController _descriptionController;
-  late TextEditingController _locationController;
-  
-  late DateTime _selectedDate;
-  late TimeOfDay _selectedTime;
-  late String _selectedType;
-  late String _selectedStatus;
-  late String _selectedEmoji;
-  
-  bool _isLoading = false;
-  String? _errorMessage;
-  
-  final List<Map<String, dynamic>> _eventTypes = [
-    {'value': 'dinner', 'label': 'Dîner', 'icon': Icons.dinner_dining, 'color': const Color(0xFFFF5722)},
-    {'value': 'lunch', 'label': 'Déjeuner', 'icon': Icons.lunch_dining, 'color': const Color(0xFFFF5722)},
-    {'value': 'brunch', 'label': 'Brunch', 'icon': Icons.brunch_dining, 'color': const Color(0xFFFF5722)},
-    {'value': 'breakfast', 'label': 'Petit-déjeuner', 'icon': Icons.free_breakfast, 'color': const Color(0xFFFF5722)},
-    {'value': 'other', 'label': 'Autre', 'icon': Icons.restaurant, 'color': const Color(0xFFFF5722)},
-  ];
-  
-  final List<Map<String, dynamic>> _eventStatuses = [
-    {'value': 'draft', 'label': 'Brouillon', 'color': Colors.grey},
-    {'value': 'planning', 'label': 'En préparation', 'color': Colors.blue},
-    {'value': 'confirmed', 'label': 'Confirmé', 'color': Colors.green},
-    {'value': 'cancelled', 'label': 'Annulé', 'color': Colors.red},
-    {'value': 'completed', 'label': 'Terminé', 'color': Colors.teal},
-  ];
-
-  // Pour le dropdown des types d'événement
-  String? _dropdownSelectedType;
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _locationController;
 
   @override
   void initState() {
@@ -57,44 +33,50 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
     _descriptionController = TextEditingController(text: widget.event.description ?? '');
     _locationController = TextEditingController(text: widget.event.location ?? '');
     
-    _selectedDate = widget.event.date;
-    _selectedTime = TimeOfDay(
-      hour: widget.event.date.hour,
-      minute: widget.event.date.minute,
+    _logic = EditEventLogic(
+      ref: ref,
+      event: widget.event,
+      formKey: _formKey,
+      titleController: _titleController,
+      descriptionController: _descriptionController,
+      locationController: _locationController,
     );
-    _selectedType = widget.event.type;
-    _selectedStatus = widget.event.status;
-    _selectedEmoji = widget.event.emoji ?? '🍽️';
-    _dropdownSelectedType = _selectedType;
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _locationController.dispose();
+    _logic.dispose();
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
+  void _showEmojiPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EmojiPickerModal(
+        emojis: EditEventLogic.commonEmojis,
+        onEmojiSelected: (emoji) => _logic.updateSelectedEmoji(emoji, () => setState(() {})),
+      ),
+    );
+  }
+
+  Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: _logic.selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       locale: const Locale('fr', 'FR'),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+    if (picked != null && picked != _logic.selectedDate) {
+      _logic.updateSelectedDate(picked, () => setState(() {}));
     }
   }
 
-  Future<void> _selectTime(BuildContext context) async {
+  Future<void> _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: _logic.selectedTime,
       builder: (BuildContext context, Widget? child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
@@ -102,137 +84,13 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
         );
       },
     );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
+    if (picked != null && picked != _logic.selectedTime) {
+      _logic.updateSelectedTime(picked, () => setState(() {}));
     }
   }
 
-  DateTime _getDateTime() {
-    return DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _selectedTime.hour,
-      _selectedTime.minute,
-    );
-  }
-
-  Future<void> _updateEvent() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      try {
-        await ref.read(eventsStateProvider.notifier).updateEvent(
-          id: widget.event.id,
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          date: _getDateTime(),
-          location: _locationController.text.trim(),
-          type: _selectedType,
-          status: _selectedStatus,
-          // Retirer 'emoji: _selectedEmoji,' s'il n'est pas supporté
-        );
-        
-        if (mounted) {
-          Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Événement mis à jour avec succès')),
-          );
-        }
-      } catch (e) {
-        setState(() {
-          _errorMessage = e.toString();
-        });
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    }
-  }
-
-  void _showEmojiPicker() {
-    final List<String> _commonEmojis = ['🍽️', '🍖', '🥘', '🥗', '🍝', '🍕', '🌮', '🥪', '🍱', '🍲'];
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Choisir un emoji',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3142),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Wrap(
-              spacing: 20,
-              runSpacing: 20,
-              children: _commonEmojis.map((emoji) => GestureDetector(
-                onTap: () {
-                  setState(() => _selectedEmoji = emoji);
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(
-                        fontSize: 40,
-                        color: Color(0xFFFF5722),
-                      ),
-                    ),
-                  ),
-                ),
-              )).toList(),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
+  Future<void> _handleUpdateEvent() async {
+    await _logic.updateEvent(context, () => setState(() {}));
   }
 
   @override
@@ -240,19 +98,18 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
     final dateFormat = DateFormat('dd MMMM yyyy', 'fr_FR');
     
     return Scaffold(
-      // Même couleur de fond que le dashboard et la page create
-      backgroundColor: const Color(0xFFF9F5F0),
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF9F5F0),
+        backgroundColor: AppTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFFF5722)),
+          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.primaryColor),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Modifier l\'événement',
           style: TextStyle(
-            color: Color(0xFF2D3142),
+            color: AppTheme.textColor,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -261,459 +118,157 @@ class _EditEventPageState extends ConsumerState<EditEventPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTheme.spacingM),
           children: [
-            // Emoji Selector
-            Center(
-              child: GestureDetector(
-                onTap: _showEmojiPicker,
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                        spreadRadius: 0.5,
-                      ),
-                    ],
-                    border: Border.all(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _selectedEmoji,
-                      style: const TextStyle(
-                        fontSize: 48,
-                        color: Color(0xFFFF5722),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            // Sélecteur d'emoji
+            EmojiSelector(
+              selectedEmoji: _logic.selectedEmoji,
+              onTap: _showEmojiPicker,
             ),
-            const SizedBox(height: 24),
-            
-            // Message d'erreur
-            if (_errorMessage != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Colors.red.shade800),
-                ),
-              ),
+            const SizedBox(height: AppTheme.spacingL),
 
-            // Titre - avec ombre plus prononcée pour mieux ressortir
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    spreadRadius: 0.5,
-                  ),
-                ],
-              ),
-              child: TextFormField(
-                controller: _titleController,
-                style: const TextStyle(color: Color(0xFF2D3142)),
-                decoration: InputDecoration(
-                  labelText: 'Titre de l\'événement',
-                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
-                  hintText: 'Ex: Dîner chez Marie',
-                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
-                  prefixIcon: const Icon(Icons.title, color: Color(0xFFFF5722)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un titre';
-                  }
-                  return null;
-                },
-              ),
+            // Message d'erreur
+            if (_logic.errorMessage != null)
+              ErrorMessageDisplay(message: _logic.errorMessage!),
+
+            // Titre
+            ShadowedTextField(
+              controller: _titleController,
+              labelText: 'Titre de l\'événement',
+              hintText: 'Ex: Dîner chez Marie',
+              prefixIcon: Icons.title,
+              validator: EventFormValidators.validateTitle,
+              isRequired: true,
             ),
-            const SizedBox(height: 16),
-            
-            // Description - avec ombre plus prononcée
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    spreadRadius: 0.5,
-                  ),
-                ],
-              ),
-              child: TextFormField(
-                controller: _descriptionController,
-                style: const TextStyle(color: Color(0xFF2D3142)),
-                decoration: InputDecoration(
-                  labelText: 'Description (optionnelle)',
-                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
-                  hintText: 'Ex: Apportez votre spécialité !',
-                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
-                  prefixIcon: const Icon(Icons.description, color: Color(0xFFFF5722)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
-                  ),
-                ),
-                maxLines: 3,
-              ),
+            const SizedBox(height: AppTheme.spacingM),
+
+            // Description
+            ShadowedTextField(
+              controller: _descriptionController,
+              labelText: 'Description (optionnelle)',
+              hintText: 'Ex: Apportez votre spécialité !',
+              prefixIcon: Icons.description,
+              maxLines: 3,
+              validator: EventFormValidators.validateDescription,
             ),
-            const SizedBox(height: 24),
-            
-            // Type d'événement - texte en noir (non blanc)
-            Text(
+            const SizedBox(height: AppTheme.spacingL),
+
+            // Type d'événement
+            const Text(
               'Type d\'événement',
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: AppTheme.fontSizeM,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF2D3142),
+                color: AppTheme.textColor,
               ),
             ),
-            const SizedBox(height: 8),
-            // Dropdown avec ombre
+            const SizedBox(height: AppTheme.spacingS),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    spreadRadius: 0.5,
-                  ),
-                ],
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                boxShadow: AppTheme.cardShadow,
               ),
               child: DropdownButtonFormField<String>(
-                value: _dropdownSelectedType,
+                value: _logic.selectedType,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  fillColor: AppTheme.cardColor,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingM,
+                    vertical: AppTheme.spacingM,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
                     borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
                   ),
                 ),
-                dropdownColor: Colors.white, // Fond blanc pour le dropdown
-                items: _eventTypes.map((type) {
+                items: EditEventLogic.eventTypes.map((type) {
                   return DropdownMenuItem<String>(
                     value: type['value'] as String,
                     child: Row(
                       children: [
-                        Icon(type['icon'] as IconData, color: const Color(0xFFFF5722)),
-                        const SizedBox(width: 8),
-                        Text(type['label'] as String, style: const TextStyle(color: Color(0xFF2D3142))),
+                        Icon(type['icon'] as IconData, color: AppTheme.primaryColor),
+                        const SizedBox(width: AppTheme.spacingS),
+                        Text(
+                          type['label'] as String,
+                          style: const TextStyle(color: AppTheme.textColor),
+                        ),
                       ],
                     ),
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() {
-                    _dropdownSelectedType = value;
-                    _selectedType = value ?? 'dinner';
-                  });
+                  if (value != null) {
+                    _logic.updateSelectedType(value, () => setState(() {}));
+                  }
                 },
               ),
             ),
-            const SizedBox(height: 24),
-            
-            // Statut de l'événement - avec le même style
-            Text(
+            const SizedBox(height: AppTheme.spacingL),
+
+            // Statut de l'événement
+            const Text(
               'Statut',
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: AppTheme.fontSizeM,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF2D3142),
+                color: AppTheme.textColor,
               ),
             ),
-            const SizedBox(height: 8),
-            // ChoiceChips en style Card
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    spreadRadius: 0.5,
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _eventStatuses.map((status) {
-                  final isSelected = _selectedStatus == status['value'];
-                  final color = status['color'] as Color;
-                  return ChoiceChip(
-                    label: Text(status['label'] as String),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedStatus = status['value'] as String;
-                        });
-                      }
-                    },
-                    backgroundColor: Colors.white,
-                    selectedColor: color,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : color,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    elevation: isSelected ? 2 : 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(
-                        color: isSelected ? Colors.transparent : color.withOpacity(0.3),
-                        width: 1,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
+            const SizedBox(height: AppTheme.spacingS),
+            StatusSelector(
+              selectedStatus: _logic.selectedStatus,
+              onStatusChanged: (status) => _logic.updateSelectedStatus(status, () => setState(() {})),
             ),
-            const SizedBox(height: 24),
-            
+            const SizedBox(height: AppTheme.spacingL),
+
             // Date et heure
-            Text(
+            const Text(
               'Date et heure',
-              style: const TextStyle(
-                fontSize: 16,
+              style: TextStyle(
+                fontSize: AppTheme.fontSizeM,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF2D3142),
+                color: AppTheme.textColor,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.spacingS),
             Row(
               children: [
                 Expanded(
-                  child: InkWell(
-                    onTap: () => _selectDate(context),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                            spreadRadius: 0.5,
-                          ),
-                        ],
-                      ),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFFFF5722)),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        child: Text(
-                          dateFormat.format(_selectedDate),
-                          style: const TextStyle(
-                            color: Color(0xFF2D3142),
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: DateTimePicker(
+                    icon: Icons.calendar_today,
+                    value: dateFormat.format(_logic.selectedDate),
+                    onTap: _selectDate,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppTheme.spacingM),
                 Expanded(
-                  child: InkWell(
-                    onTap: () => _selectTime(context),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                            spreadRadius: 0.5,
-                          ),
-                        ],
-                      ),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.access_time, color: Color(0xFFFF5722)),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        child: Text(
-                          _selectedTime.format(context),
-                          style: const TextStyle(
-                            color: Color(0xFF2D3142),
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: DateTimePicker(
+                    icon: Icons.access_time,
+                    value: _logic.selectedTime.format(context),
+                    onTap: _selectTime,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            
+            const SizedBox(height: AppTheme.spacingM),
+
             // Lieu
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    spreadRadius: 0.5,
-                  ),
-                ],
-              ),
-              child: TextFormField(
-                controller: _locationController,
-                style: const TextStyle(color: Color(0xFF2D3142)),
-                decoration: InputDecoration(
-                  labelText: 'Lieu (optionnel)',
-                  labelStyle: const TextStyle(color: Color(0xFF2D3142)),
-                  hintText: 'Ex: 12 rue des Lilas, Paris',
-                  hintStyle: TextStyle(color: const Color(0xFF2D3142).withOpacity(0.6)),
-                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF5722)),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Color(0xFF6B4EFF)),
-                  ),
-                ),
-              ),
+            ShadowedTextField(
+              controller: _locationController,
+              labelText: 'Lieu (optionnel)',
+              hintText: 'Ex: 12 rue des Lilas, Paris',
+              prefixIcon: Icons.location_on,
+              validator: EventFormValidators.validateLocation,
             ),
-            const SizedBox(height: 32),
-            
+            const SizedBox(height: AppTheme.spacingXL),
+
             // Bouton de mise à jour
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _updateEvent,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF5722),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 2,
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Mettre à jour l\'événement',
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
+            SubmitButton(
+              text: 'Mettre à jour l\'événement',
+              onPressed: _handleUpdateEvent,
+              isLoading: _logic.isLoading,
             ),
           ],
         ),

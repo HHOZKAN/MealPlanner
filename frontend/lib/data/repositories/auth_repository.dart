@@ -49,14 +49,14 @@ class AuthRepository {
         
         return user;
       } else {
-        throw Exception(data['message'] ?? 'Erreur lors de l\'inscription');
+        throw Exception(data['message'] ?? 'Error during registration');
       }
     } catch (e) {
       if (e is DioException) {
         final data = e.response?.data;
-        throw Exception(data?['message'] ?? 'Erreur lors de l\'inscription');
+        throw Exception(data?['message'] ?? 'Error during registration');
       }
-      throw Exception('Erreur lors de l\'inscription');
+      throw Exception('Error during registration');
     }
   }
   
@@ -64,7 +64,7 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    print('Tentative de connexion avec email: $email');
+    print('Login attempt with email: $email');
     try {
       final response = await _dioClient.post(
         ApiConstants.login,
@@ -74,7 +74,7 @@ class AuthRepository {
         },
       );
       
-      print('Réponse reçue: ${response.data}');
+      print('Response received: ${response.data}');
       
       final data = response.data;
       
@@ -83,8 +83,8 @@ class AuthRepository {
           final token = data['data']['token'];
           final user = UserModel.fromJson(data['data']['user']);
           
-          print('Connexion réussie, token: $token');
-          print('Utilisateur: ${user.toString()}');
+          print('Login successful, token: $token');
+          print('User: ${user.toString()}');
           
           // Sauvegarder le token
           final prefs = await SharedPreferences.getInstance();
@@ -92,24 +92,24 @@ class AuthRepository {
           
           return user;
         } catch (e) {
-          print('Erreur lors de la désérialisation des données: $e');
-          throw Exception('Erreur lors de la connexion: format de données incorrect');
+          print('Error deserializing data: $e');
+          throw Exception('Login error: incorrect data format');
         }
       } else {
-        print('Erreur dans la réponse: ${data['message']}');
-        throw Exception(data['message'] ?? 'Erreur lors de la connexion');
+        print('Error in response: ${data['message']}');
+        throw Exception(data['message'] ?? 'Error during login');
       }
     } catch (e) {
-      print('Exception lors de la connexion: $e');
+      print('Exception during login: $e');
       if (e is DioException) {
         print('DioException: ${e.response?.data}');
         final data = e.response?.data;
         if (e.response?.statusCode == 401) {
-          throw Exception('Identifiants incorrects');
+          throw Exception('Invalid credentials');
         }
-        throw Exception(data?['message'] ?? 'Erreur lors de la connexion');
+        throw Exception(data?['message'] ?? 'Error during login');
       }
-      throw Exception('Erreur lors de la connexion: ${e.toString()}');
+      throw Exception('Error during login: ${e.toString()}');
     }
   }
   
@@ -117,19 +117,19 @@ class AuthRepository {
     try {
       await _dioClient.post(ApiConstants.logout);
       
-      // Supprimer le token
+      // Remove the token
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
     } catch (e) {
-      // Même en cas d'erreur, on supprime le token local
+      // Even in case of error, remove the local token
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
       
       if (e is DioException) {
         final data = e.response?.data;
-        throw Exception(data?['message'] ?? 'Erreur lors de la déconnexion');
+        throw Exception(data?['message'] ?? 'Error during logout');
       }
-      throw Exception('Erreur lors de la déconnexion');
+      throw Exception('Error during logout');
     }
   }
   
@@ -142,14 +142,14 @@ class AuthRepository {
       if (data['status'] == 'success') {
         return UserModel.fromJson(data['data']);
       } else {
-        throw Exception(data['message'] ?? 'Erreur lors de la récupération du profil');
+        throw Exception(data['message'] ?? 'Error retrieving profile');
       }
     } catch (e) {
       if (e is DioException) {
         final data = e.response?.data;
-        throw Exception(data?['message'] ?? 'Erreur lors de la récupération du profil');
+        throw Exception(data?['message'] ?? 'Error retrieving profile');
       }
-      throw Exception('Erreur lors de la récupération du profil');
+      throw Exception('Error retrieving profile');
     }
   }
   
