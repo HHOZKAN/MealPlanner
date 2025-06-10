@@ -85,14 +85,14 @@ class AuthController extends Controller
 
                 DB::commit();
 
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Inscription réussie',
-                    'data' => [
-                        'user' => $user,
-                        'token' => $token
-                    ]
-                ], 201);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Inscription réussie',
+            'data' => [
+                'user' => $this->sanitizeForJson($user),
+                'token' => $token
+            ]
+        ], 201, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('Erreur lors de la création de l\'utilisateur', [
@@ -174,10 +174,10 @@ class AuthController extends Controller
             'status' => 'success',
             'message' => 'Connexion réussie',
             'data' => [
-                'user' => $user,
+                'user' => $this->sanitizeForJson($user),
                 'token' => $token
             ]
-        ]);
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
     } catch (\Exception $e) {
         Log::error('Erreur lors de la connexion', [
@@ -269,7 +269,7 @@ class AuthController extends Controller
             $user->save();
 
             return $this->successResponse([
-                'user' => $user
+                'user' => $this->sanitizeForJson($user)
             ], 'Profil mis à jour avec succès');
         } catch (\Exception $e) {
             return $this->errorResponse('Une erreur est survenue lors de la mise à jour du profil', 500);

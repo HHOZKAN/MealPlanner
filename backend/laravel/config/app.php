@@ -135,82 +135,83 @@ return [
     ],
 
     /*
-|--------------------------------------------------------------------------
-| Autoloaded Service Providers
-|--------------------------------------------------------------------------
-|
-| The service providers listed here will be automatically loaded on the
-| request to your application. Feel free to add your own services to
-| this array to grant expanded functionality to your applications.
-|
-*/
+    |--------------------------------------------------------------------------
+    | Autoloaded Service Providers
+    |--------------------------------------------------------------------------
+    |
+    | The service providers listed here will be automatically loaded on the
+    | request to your application. Feel free to add your own services to
+    | this array to grant expanded functionality to your applications.
+    |
+    */
 
-'providers' => [
+    'providers' => [
+
+        /*
+         * Laravel Framework Service Providers...
+         */
+        Illuminate\Auth\AuthServiceProvider::class,
+        Illuminate\Broadcasting\BroadcastServiceProvider::class,
+        Illuminate\Bus\BusServiceProvider::class,
+        Illuminate\Cache\CacheServiceProvider::class,
+        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
+        Illuminate\Cookie\CookieServiceProvider::class,
+        Illuminate\Database\DatabaseServiceProvider::class,
+        Illuminate\Encryption\EncryptionServiceProvider::class,
+        Illuminate\Filesystem\FilesystemServiceProvider::class,
+        Illuminate\Foundation\Providers\FoundationServiceProvider::class,
+        Illuminate\Hashing\HashServiceProvider::class,
+        Illuminate\Mail\MailServiceProvider::class,
+        Illuminate\Notifications\NotificationServiceProvider::class,
+        Illuminate\Pagination\PaginationServiceProvider::class,
+        Illuminate\Pipeline\PipelineServiceProvider::class,
+        Illuminate\Queue\QueueServiceProvider::class,
+        Illuminate\Redis\RedisServiceProvider::class,
+        Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
+        Illuminate\Session\SessionServiceProvider::class,
+        Illuminate\Translation\TranslationServiceProvider::class,
+        Illuminate\Validation\ValidationServiceProvider::class,
+        Illuminate\View\ViewServiceProvider::class,
+
+        /*
+         * Package Service Providers...
+         */
+        Laravel\Sanctum\SanctumServiceProvider::class,
+
+        /*
+         * Application Service Providers...
+         */
+        App\Providers\AppServiceProvider::class,
+        App\Providers\AuthServiceProvider::class,
+        App\Providers\EventServiceProvider::class,
+        App\Providers\RouteServiceProvider::class,
+        App\Providers\Utf8ServiceProvider::class,
+    ],
 
     /*
-     * Laravel Framework Service Providers...
-     */
-    Illuminate\Auth\AuthServiceProvider::class,
-    Illuminate\Broadcasting\BroadcastServiceProvider::class,
-    Illuminate\Bus\BusServiceProvider::class,
-    Illuminate\Cache\CacheServiceProvider::class,
-    Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
-    Illuminate\Cookie\CookieServiceProvider::class,
-    Illuminate\Database\DatabaseServiceProvider::class,
-    Illuminate\Encryption\EncryptionServiceProvider::class,
-    Illuminate\Filesystem\FilesystemServiceProvider::class,
-    Illuminate\Foundation\Providers\FoundationServiceProvider::class,
-    Illuminate\Hashing\HashServiceProvider::class,
-    Illuminate\Mail\MailServiceProvider::class,
-    Illuminate\Notifications\NotificationServiceProvider::class,
-    Illuminate\Pagination\PaginationServiceProvider::class,
-    Illuminate\Pipeline\PipelineServiceProvider::class,
-    Illuminate\Queue\QueueServiceProvider::class,
-    Illuminate\Redis\RedisServiceProvider::class,
-    Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
-    Illuminate\Session\SessionServiceProvider::class,
-    Illuminate\Translation\TranslationServiceProvider::class,
-    Illuminate\Validation\ValidationServiceProvider::class,
-    Illuminate\View\ViewServiceProvider::class,
+    |--------------------------------------------------------------------------
+    | Class Aliases
+    |--------------------------------------------------------------------------
+    |
+    | This array of class aliases will be registered when this application
+    | is started. However, feel free to register as many as you wish as
+    | the aliases are "lazy" loaded so they don't hinder performance.
+    |
+    */
 
-    /*
-     * Package Service Providers...
-     */
-    Laravel\Sanctum\SanctumServiceProvider::class,
+    'aliases' => [
+        'App' => Illuminate\Support\Facades\App::class,
+        'Auth' => Illuminate\Support\Facades\Auth::class,
+        'Config' => Illuminate\Support\Facades\Config::class,
+        'DB' => Illuminate\Support\Facades\DB::class,
+        'Hash' => Illuminate\Support\Facades\Hash::class,
+        'Route' => Illuminate\Support\Facades\Route::class,
+        // ... autres aliases si nécessaire
+    ],
 
-    /*
-     * Application Service Providers...
-     */
-    App\Providers\AppServiceProvider::class,
-    App\Providers\AuthServiceProvider::class,
-    App\Providers\EventServiceProvider::class,
-    App\Providers\RouteServiceProvider::class,
-],
-
-/*
-|--------------------------------------------------------------------------
-| Class Aliases
-|--------------------------------------------------------------------------
-|
-| This array of class aliases will be registered when this application
-| is started. However, feel free to register as many as you wish as
-| the aliases are "lazy" loaded so they don't hinder performance.
-|
-*/
-
-'aliases' => [
-    'App' => Illuminate\Support\Facades\App::class,
-    'Auth' => Illuminate\Support\Facades\Auth::class,
-    'Config' => Illuminate\Support\Facades\Config::class,
-    'DB' => Illuminate\Support\Facades\DB::class,
-    'Hash' => Illuminate\Support\Facades\Hash::class,
-    'Route' => Illuminate\Support\Facades\Route::class,
-    // ... autres aliases si nécessaire
-],
-
-'store_urls' => [
-    'ios' => env('APP_STORE_URL', 'https://apps.apple.com/app/meal-planner'),
-    'android' => env('PLAY_STORE_URL', 'https://play.google.com/store/apps/meal-planner'),
-],
+    'store_urls' => [
+        'ios' => env('APP_STORE_URL', 'https://apps.apple.com/app/meal-planner'),
+        'android' => env('PLAY_STORE_URL', 'https://play.google.com/store/apps/meal-planner'),
+    ],
 
 ];

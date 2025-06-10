@@ -42,7 +42,7 @@ class Kernel extends HttpKernel
         ValidatePostSize::class,
         TrimStrings::class,
         ConvertEmptyStringsToNull::class,
-        
+        \App\Http\Middleware\EnsureUtf8Encoding::class,
     ];
 
     /**
